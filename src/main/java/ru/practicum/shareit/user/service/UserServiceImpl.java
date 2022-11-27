@@ -49,9 +49,8 @@ public class UserServiceImpl implements UserService {
             }
             foundedUserById.setEmail(userDto.getEmail());
         }
-        if (Objects.nonNull(userDto.getName())) {
-            foundedUserById.setName(userDto.getName());
-        }
+        Optional.ofNullable(userDto.getName()).ifPresent((n)->
+                foundedUserById.setName(userDto.getName()));
         User updatedUser = userRepository.update(foundedUserById);
         log.info("Пользователь с id " + updatedUser.getId() + " изменен");
         return userMapper.toDto(updatedUser);

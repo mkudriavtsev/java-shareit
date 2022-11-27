@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AuthorizationUserException;
 import ru.practicum.shareit.exception.NotFoundException;
@@ -12,10 +13,7 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,15 +45,12 @@ public class ItemServiceImpl implements ItemService {
         if (!item.getOwner().getId().equals(userId)) {
             throw new AuthorizationUserException("Пользователь с id " + userId + " не имеет прав для изменения этой вещи");
         }
-        if (Objects.nonNull(itemDto.getName())) {
-            item.setName(itemDto.getName());
-        }
-        if (Objects.nonNull(itemDto.getDescription())) {
-            item.setDescription(itemDto.getDescription());
-        }
-        if (Objects.nonNull(itemDto.getAvailable())) {
-            item.setAvailable(itemDto.getAvailable());
-        }
+        Optional.ofNullable(itemDto.getName()).ifPresent((n) ->
+                item.setName(itemDto.getName()));
+        Optional.ofNullable(itemDto.getDescription()).ifPresent((d) ->
+                item.setDescription(itemDto.getDescription()));
+        Optional.ofNullable(itemDto.getAvailable()).ifPresent((a) ->
+                item.setAvailable(itemDto.getAvailable()));
         Item updatedItem = itemRepository.update(item);
         log.info("Вещь с id " + updatedItem.getId() + " изменена");
         return itemMapper.toDto(updatedItem);
@@ -87,8 +82,8 @@ public class ItemServiceImpl implements ItemService {
         List<Item> foundedItems = new ArrayList<>();
         for (Item item : items) {
             if (Boolean.TRUE.equals(item.getAvailable())) {
-                if (item.getDescription().toLowerCase().contains(text.toLowerCase())
-                        || item.getName().toLowerCase().contains(text.toLowerCase())) {
+                if (StringUtils.containsIgnoreCase(item.getDescription(), text)
+                        || StringUtils.containsIgnoreCase(item.getName(), text)) {
                     foundedItems.add(item);
                 }
             }
