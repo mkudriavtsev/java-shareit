@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
             }
             foundedUserById.setEmail(userDto.getEmail());
         }
-        Optional.ofNullable(userDto.getName()).ifPresent((n)->
+        Optional.ofNullable(userDto.getName()).ifPresent((n) ->
                 foundedUserById.setName(userDto.getName()));
         User updatedUser = userRepository.update(foundedUserById);
         log.info("Пользователь с id " + updatedUser.getId() + " изменен");
