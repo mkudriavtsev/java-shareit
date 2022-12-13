@@ -1,6 +1,9 @@
 package ru.practicum.shareit.user.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
@@ -16,4 +19,7 @@ public interface UserMapper {
     List<User> toUserList(List<UserDto> userDtos);
 
     List<UserDto> toUserDtoList(List<User> users);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateUserFromDto(UserDto userDto, @MappingTarget User user);
 }
