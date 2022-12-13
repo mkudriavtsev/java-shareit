@@ -103,8 +103,8 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public CommentDto createComment(CommentDto commentDto, Long itemId, Long userId) {
-        if (bookingRepository.existsBookingByItem_IdAndBooker_IdAndStatusAndEndIsBefore
-                (itemId, userId, Status.APPROVED, LocalDateTime.now())) {
+        if (bookingRepository.existsBookingByItem_IdAndBooker_IdAndStatusAndEndIsBefore(
+                itemId, userId, Status.APPROVED, LocalDateTime.now())) {
             Comment comment = commentMapper.toEntity(commentDto);
             User author = userRepository.findById(userId).orElseThrow(() -> {
                 throw new NotFoundException("User with id " + userId + " not found");
@@ -124,10 +124,10 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private void setBookingsToItemDto(ItemDto itemDto) {
-        Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore
-                (itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "end"));
-        Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter
-                (itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.ASC, "start"));
+        Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
+                itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "end"));
+        Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
+                itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.ASC, "start"));
         itemDto.setLastBooking(bookingMapper.toBookingItemDtoFromEntity(lastBooking));
         itemDto.setNextBooking(bookingMapper.toBookingItemDtoFromEntity(nextBooking));
     }
