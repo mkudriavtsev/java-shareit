@@ -33,6 +33,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
+    private static final Sort SORT_BY_START_ASC = Sort.by(Sort.Direction.ASC, "start");
+    private static final Sort SORT_BY_END_DESC = Sort.by(Sort.Direction.DESC, "end");
+
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
@@ -125,9 +128,9 @@ public class ItemServiceImpl implements ItemService {
 
     private void setBookingsToItemDto(ItemDto itemDto) {
         Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
-                itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "end"));
+                itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
         Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
-                itemDto.getId(), LocalDateTime.now(), Sort.by(Sort.Direction.ASC, "start"));
+                itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
         itemDto.setLastBooking(bookingMapper.toBookingItemDtoFromEntity(lastBooking));
         itemDto.setNextBooking(bookingMapper.toBookingItemDtoFromEntity(nextBooking));
     }

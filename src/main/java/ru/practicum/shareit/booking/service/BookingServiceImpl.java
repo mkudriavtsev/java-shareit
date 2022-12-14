@@ -31,6 +31,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+    private static final Sort SORT_BY_START_DESC = Sort.by(Sort.Direction.DESC, "start");
+
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -71,7 +73,7 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getItem().getOwner().getId().equals(ownerId)) {
             throw new NotFoundException("User with id " + ownerId + " has no rights to change this item");
         }
-        if (!booking.getStatus().equals(Status.WAITING)) {
+        if (booking.getStatus() != Status.WAITING) {
             throw new BookingStatusException("Booking status is already set");
         }
         if (isApproved) {
@@ -98,33 +100,31 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getAllBookingsForUserByState(Long userId, RequestState state) {
-        userRepository.findById(userId).orElseThrow(() -> {
-            throw new NotFoundException("User with id " + userId + " not found");
-        });
+        checkUserExist(userId);
         List<Booking> bookingList;
         switch (state) {
             case ALL:
-                bookingList = bookingRepository.findByBookerId(userId, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerId(userId, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case CURRENT:
-                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case FUTURE:
-                bookingList = bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(userId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case PAST:
-                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(userId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case WAITING:
-                bookingList = bookingRepository.findByBookerIdAndStatusIs(userId,
-                        Status.WAITING, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerIdAndStatusIs(
+                        userId, Status.WAITING, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case REJECTED:
-                bookingList = bookingRepository.findByBookerIdAndStatusIs(userId,
-                        Status.REJECTED, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByBookerIdAndStatusIs(
+                        userId, Status.REJECTED, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
         }
         return Collections.emptyList();
@@ -132,35 +132,39 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getAllBookingsForOwnerByState(Long ownerId, RequestState state) {
-        userRepository.findById(ownerId).orElseThrow(() -> {
-            throw new NotFoundException("Owner of the item with id " + ownerId + " not found");
-        });
+        checkUserExist(ownerId);
         List<Booking> bookingList;
         switch (state) {
             case ALL:
-                bookingList = bookingRepository.findByItemOwnerId(ownerId, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerId(ownerId, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case CURRENT:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case FUTURE:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(ownerId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case PAST:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(ownerId,
-                        LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case WAITING:
-                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId,
-                        Status.WAITING, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(
+                        ownerId, Status.WAITING, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
             case REJECTED:
-                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId,
-                        Status.REJECTED, Sort.by(Sort.Direction.DESC, "start"));
+                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(
+                        ownerId, Status.REJECTED, SORT_BY_START_DESC);
                 return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
         }
         return Collections.emptyList();
+    }
+
+    private void checkUserExist(Long userId) {
+        userRepository.findById(userId).orElseThrow(() -> {
+            throw new NotFoundException("User with id " + userId + " not found");
+        });
     }
 }
