@@ -5,7 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CreateItemDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.PatchItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.ValidationGroup;
 
@@ -23,14 +25,14 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Validated({ValidationGroup.OnCreate.class})
-    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto,
+    public ItemDto createItem(@Valid @RequestBody CreateItemDto dto,
                               @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.createItem(itemDto, ownerId);
+        return itemService.createItem(dto, ownerId);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto patchItem(@Valid @RequestBody ItemDto itemDto,
+    public ItemDto patchItem(@RequestBody PatchItemDto itemDto,
                              @RequestHeader("X-Sharer-User-Id") Long ownerId,
                              @PathVariable Long id) {
         itemDto.setId(id);

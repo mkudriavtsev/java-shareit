@@ -37,3 +37,12 @@ create table if not exists comments
     created   TIMESTAMP,
     constraint PK_COMMENTS primary key (id)
 );
+
+create table if not exists requests
+(
+    id           BIGINT auto_increment,
+    description  CHARACTER LARGE OBJECT,
+    requester_id BIGINT references USERS on delete cascade,
+    created      TIMESTAMP,
+    constraint PK_REQUESTS primary key (id)
+);

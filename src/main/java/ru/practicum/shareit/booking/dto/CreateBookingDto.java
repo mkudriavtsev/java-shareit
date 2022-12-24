@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
-public class BookingRequestDto {
+public class CreateBookingDto {
 
     @NotNull
     private Long itemId;

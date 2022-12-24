@@ -13,7 +13,9 @@ import ru.practicum.shareit.exception.AuthorizationUserException;
 import ru.practicum.shareit.exception.NoBookingInPastException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CreateItemDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.PatchItemDto;
 import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Comment;
@@ -46,20 +48,20 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     @Override
-    public ItemDto createItem(ItemDto itemDto, Long ownerId) {
+    public ItemDto createItem(CreateItemDto itemDto, Long ownerId) {
         User owner = userRepository.findById(ownerId).orElseThrow(() -> {
             throw new NotFoundException("User with id " + ownerId + " not found");
         });
-        Item item = itemMapper.toEntity(itemDto);
+        Item item = itemMapper.toEntityFromCreateItemDto(itemDto);
         item.setOwner(owner);
         Item savedItem = itemRepository.save(item);
         log.info("Item with id " + savedItem.getId() + " created");
-        return itemMapper.toDto(savedItem);
+        return itemMapper.toItemDto(savedItem);
     }
 
     @Transactional
     @Override
-    public ItemDto patchItem(ItemDto itemDto, Long ownerId) {
+    public ItemDto patchItem(PatchItemDto itemDto, Long ownerId) {
         Item item = itemRepository.findById(itemDto.getId()).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + itemDto.getId() + " not found");
         });
@@ -69,7 +71,7 @@ public class ItemServiceImpl implements ItemService {
         itemMapper.updateItemFromDto(itemDto, item);
         Item updatedItem = itemRepository.save(item);
         log.info("Item with id " + updatedItem.getId() + " updated");
-        return itemMapper.toDto(updatedItem);
+        return itemMapper.toItemDto(updatedItem);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class ItemServiceImpl implements ItemService {
         Item foundedItemById = itemRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + id + " not found");
         });
-        ItemDto itemDto = itemMapper.toDto(foundedItemById);
+        ItemDto itemDto = itemMapper.toItemDto(foundedItemById);
         if (foundedItemById.getOwner().getId().equals(userId)) {
             setBookingsToItemDto(itemDto);
         }
@@ -117,7 +119,6 @@ public class ItemServiceImpl implements ItemService {
             });
             comment.setAuthor(author);
             comment.setItem(item);
-            comment.setCreated(LocalDateTime.now());
             Comment savedComment = commentRepository.save(comment);
             log.info("Comment with id " + savedComment.getId() + " created");
             return commentMapper.toDto(savedComment);
@@ -131,8 +132,8 @@ public class ItemServiceImpl implements ItemService {
                 itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
         Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
                 itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
-        itemDto.setLastBooking(bookingMapper.toBookingItemDtoFromEntity(lastBooking));
-        itemDto.setNextBooking(bookingMapper.toBookingItemDtoFromEntity(nextBooking));
+        itemDto.setLastBooking(bookingMapper.toBookingInItemDtoFromEntity(lastBooking));
+        itemDto.setNextBooking(bookingMapper.toBookingInItemDtoFromEntity(nextBooking));
     }
 
     private void setCommentsToItemDto(ItemDto itemDto) {
