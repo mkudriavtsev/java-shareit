@@ -22,12 +22,15 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -42,6 +45,8 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    private final ItemRequestRepository itemRequestRepository;
+
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
@@ -52,8 +57,15 @@ public class ItemServiceImpl implements ItemService {
         User owner = userRepository.findById(ownerId).orElseThrow(() -> {
             throw new NotFoundException("User with id " + ownerId + " not found");
         });
-        Item item = itemMapper.toEntityFromCreateItemDto(itemDto);
+        Item item = itemMapper.toEntity(itemDto);
         item.setOwner(owner);
+        Long requestId = itemDto.getRequestId();
+        if (Objects.nonNull(requestId)) {
+            ItemRequest itemRequest = itemRequestRepository.findById(requestId).orElseThrow(() -> {
+                throw new NotFoundException("Request with id " + requestId + " not found");
+            });
+            itemRequest.addItem(item);
+        }
         Item savedItem = itemRepository.save(item);
         log.info("Item with id " + savedItem.getId() + " created");
         return itemMapper.toItemDto(savedItem);
@@ -68,7 +80,7 @@ public class ItemServiceImpl implements ItemService {
         if (!item.getOwner().getId().equals(ownerId)) {
             throw new AuthorizationUserException("User with id " + ownerId + " has no rights to change this item");
         }
-        itemMapper.updateItemFromDto(itemDto, item);
+        itemMapper.updateItem(itemDto, item);
         Item updatedItem = itemRepository.save(item);
         log.info("Item with id " + updatedItem.getId() + " updated");
         return itemMapper.toItemDto(updatedItem);
@@ -132,8 +144,8 @@ public class ItemServiceImpl implements ItemService {
                 itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
         Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
                 itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
-        itemDto.setLastBooking(bookingMapper.toBookingInItemDtoFromEntity(lastBooking));
-        itemDto.setNextBooking(bookingMapper.toBookingInItemDtoFromEntity(nextBooking));
+        itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBooking));
+        itemDto.setNextBooking(bookingMapper.toBookingInItemDto(nextBooking));
     }
 
     private void setCommentsToItemDto(ItemDto itemDto) {

@@ -6,10 +6,12 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -24,7 +26,7 @@ public class ItemRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
     @ManyToOne
@@ -32,9 +34,18 @@ public class ItemRequest {
     @ToString.Exclude
     private User requester;
 
+    @OneToMany(mappedBy = "request", cascade=CascadeType.ALL)
+    @ToString.Exclude
+    private List<Item> items;
+
     @CreationTimestamp
     @Column(name = "created")
     private LocalDateTime created;
+
+    public void addItem(Item item) {
+        items.add(item);
+        item.setRequest(this);
+    }
 
     @Override
     public boolean equals(Object o) {
