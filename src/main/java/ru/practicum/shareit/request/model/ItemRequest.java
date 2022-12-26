@@ -34,7 +34,7 @@ public class ItemRequest {
     @ToString.Exclude
     private User requester;
 
-    @OneToMany(mappedBy = "request", cascade=CascadeType.ALL)
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<Item> items;
 

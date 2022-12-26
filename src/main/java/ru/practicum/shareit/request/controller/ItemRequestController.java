@@ -42,9 +42,10 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     @ResponseStatus(HttpStatus.OK)
-    public List<ItemRequestDto> getAllItemRequests(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                   @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
-                                                   @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size) {
-        return itemRequestService.getAllItemRequestsPaginated(userId, from, size);
+    public List<ItemRequestDto> getAllItemRequests(
+            @RequestHeader("X-Sharer-User-Id") Long userId,
+            @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
+            @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size) {
+        return itemRequestService.getAllItemRequests(userId, from, size);
     }
 }

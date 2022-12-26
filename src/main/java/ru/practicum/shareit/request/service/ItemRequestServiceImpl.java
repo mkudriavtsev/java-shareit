@@ -2,8 +2,8 @@ package ru.practicum.shareit.request.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,7 +60,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> getAllItemRequestsPaginated(Long userId, Integer from, Integer size) {
+    public List<ItemRequestDto> getAllItemRequests(Long userId, Integer from, Integer size) {
         userService.checkUserExist(userId);
         PageRequest pageRequest = PageRequest.of((from / size), size, Sort.by("created").descending());
         Page<ItemRequest> page = itemRequestRepository.findByRequesterIdIsNot(userId, pageRequest);
