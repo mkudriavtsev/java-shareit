@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 public class ItemRequestDto {
-    private long id;
+    private Long id;
     private String description;
     private LocalDateTime created;
     private List<ItemInRequestDto> items;

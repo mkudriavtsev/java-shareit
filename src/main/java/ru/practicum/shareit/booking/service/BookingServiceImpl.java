@@ -101,7 +101,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getBooker().getId().equals(userId) || booking.getItem().getOwner().getId().equals(userId)) {
             return bookingMapper.toBookingDto(booking);
         } else {
-            throw new NotFoundException("User with id " + userId + " has no rights to view this item");
+            throw new NotFoundException("User with id " + userId + " has no rights to view this booking");
         }
     }
 
