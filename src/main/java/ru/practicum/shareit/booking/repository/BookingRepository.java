@@ -15,52 +15,40 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Page<Booking> findByBookerId(Long bookerId, Pageable pageable);
 
-    Page<Booking> findByBookerIdAndStartIsBeforeAndEndIsAfter(Long bookerId,
-                                                              LocalDateTime start,
-                                                              LocalDateTime end,
-                                                              Pageable pageable);
+    Page<Booking> findByBookerIdAndStartIsBeforeAndEndIsAfter(
+            Long bookerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    Page<Booking> findByBookerIdAndStartIsAfterAndEndIsAfter(Long bookerId,
-                                                             LocalDateTime start,
-                                                             LocalDateTime end,
-                                                             Pageable pageable);
+    Page<Booking> findByBookerIdAndStartIsAfterAndEndIsAfter(
+            Long bookerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    Page<Booking> findByBookerIdAndStartIsBeforeAndEndIsBefore(Long bookerId,
-                                                               LocalDateTime start,
-                                                               LocalDateTime end,
-                                                               Pageable pageable);
+    Page<Booking> findByBookerIdAndStartIsBeforeAndEndIsBefore(
+            Long bookerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     Page<Booking> findByBookerIdAndStatusIs(Long bookerId, Status status, Pageable pageable);
 
     Page<Booking> findByItemOwnerId(Long ownerId, Pageable pageable);
 
-    Page<Booking> findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(Long ownerId,
-                                                                 LocalDateTime start,
-                                                                 LocalDateTime end,
-                                                                 Pageable pageable);
+    Page<Booking> findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
+            Long ownerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    Page<Booking> findByItemOwnerIdAndStartIsAfterAndEndIsAfter(Long ownerId,
-                                                                LocalDateTime start,
-                                                                LocalDateTime end,
-                                                                Pageable pageable);
+    Page<Booking> findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
+            Long ownerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    Page<Booking> findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(Long ownerId,
-                                                                  LocalDateTime start,
-                                                                  LocalDateTime end,
-                                                                  Pageable pageable);
+    Page<Booking> findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
+            Long ownerId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     Page<Booking> findByItemOwnerIdAndStatusIs(Long ownerId, Status status, Pageable pageable);
 
-    Booking findFirstByItemIdAndEndIsBefore(Long itemId, LocalDateTime end, Sort sort);
+    Booking findFirstByItemIdAndStartIsBeforeOrStartEquals(
+            Long itemId, LocalDateTime before, LocalDateTime equals, Sort sort);
 
     Booking findFirstByItemIdAndStartIsAfter(Long itemId, LocalDateTime start, Sort sort);
 
-    Boolean existsBookingByItem_IdAndBooker_IdAndStatusAndEndIsBefore(Long itemId,
-                                                                      Long bookerId,
-                                                                      Status status,
-                                                                      LocalDateTime end);
+    Boolean existsBookingByItem_IdAndBooker_IdAndStatusAndEndIsBefore(
+            Long itemId, Long bookerId, Status status, LocalDateTime end);
 
-    List<Booking> findByItemInAndEndIsBefore(List<Item> items, LocalDateTime end, Sort sort);
+    List<Booking> findByItemInAndStartIsBeforeOrStartEquals(
+            List<Item> items, LocalDateTime before, LocalDateTime equals, Sort sort);
 
     List<Booking> findByItemInAndStartIsAfter(List<Item> items, LocalDateTime start, Sort sort);
 }

@@ -27,7 +27,6 @@ class BookingRepositoryTest {
 
     private static final Sort SORT_BY_START_DESC = Sort.by(Sort.Direction.DESC, "start");
     private static final Sort SORT_BY_START_ASC = Sort.by(Sort.Direction.ASC, "start");
-    private static final Sort SORT_BY_END_DESC = Sort.by(Sort.Direction.DESC, "end");
     private static final PageRequest PAGE_REQUEST = PageRequest.of(0, 10, SORT_BY_START_DESC);
 
     @Autowired
@@ -172,14 +171,14 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findFirstByItemIdAndEndIsBefore() {
+    void findFirstByItemIdAndStartIsBeforeOrStartEquals() {
         Booking booking = getBooking();
         booking.setStart(LocalDateTime.now().minusDays(2L));
         booking.setEnd(LocalDateTime.now().minusDays(1L));
         Booking expectedBooking = entityManager.persistAndFlush(booking);
 
-        Booking actualBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
-                1L, LocalDateTime.now(), SORT_BY_END_DESC);
+        Booking actualBooking = bookingRepository.findFirstByItemIdAndStartIsBeforeOrStartEquals(
+                1L, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
 
         assertEquals(expectedBooking, actualBooking);
     }
@@ -212,7 +211,7 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findByItemInAndEndIsBefore() {
+    void findByItemInAndStartIsBeforeOrStartEquals() {
         List<Item> items = itemRepository.findAll();
         Booking booking = getBooking();
         booking.setStart(LocalDateTime.now().minusDays(2L));
@@ -220,8 +219,8 @@ class BookingRepositoryTest {
         Booking savedBooking = entityManager.persistAndFlush(booking);
         List<Booking> expectedBookings = List.of(savedBooking);
 
-        List<Booking> actualBookings = bookingRepository.findByItemInAndEndIsBefore(
-                items, LocalDateTime.now(), SORT_BY_END_DESC);
+        List<Booking> actualBookings = bookingRepository.findByItemInAndStartIsBeforeOrStartEquals(
+                items, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
 
         assertEquals(expectedBookings, actualBookings);
     }

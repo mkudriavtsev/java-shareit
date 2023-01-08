@@ -43,7 +43,7 @@ import static java.util.stream.Collectors.toList;
 public class ItemServiceImpl implements ItemService {
 
     private static final Sort SORT_BY_START_ASC = Sort.by(Sort.Direction.ASC, "start");
-    private static final Sort SORT_BY_END_DESC = Sort.by(Sort.Direction.DESC, "end");
+    private static final Sort SORT_BY_START_DESC = Sort.by(Sort.Direction.DESC, "start");
     private static final Sort SORT_BY_CREATED_DESC = Sort.by(Sort.Direction.DESC, "created");
 
     private final ItemRepository itemRepository;
@@ -97,8 +97,8 @@ public class ItemServiceImpl implements ItemService {
         });
         ItemDto itemDto = itemMapper.toItemDto(foundedItemById);
         if (foundedItemById.getOwner().getId().equals(userId)) {
-            Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
-                    itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
+            Booking lastBooking = bookingRepository.findFirstByItemIdAndStartIsBeforeOrStartEquals(
+                    itemDto.getId(), LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
             Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
                     itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
             itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBooking));
@@ -115,8 +115,8 @@ public class ItemServiceImpl implements ItemService {
         Map<Long, List<Comment>> comments = commentRepository.findByItemIn(items, SORT_BY_CREATED_DESC)
                 .stream()
                 .collect(groupingBy(comment -> comment.getItem().getId(), toList()));
-        Map<Long, List<Booking>> lastBookingsMap = bookingRepository.findByItemInAndEndIsBefore(
-                        items, LocalDateTime.now(), SORT_BY_END_DESC)
+        Map<Long, List<Booking>> lastBookingsMap = bookingRepository.findByItemInAndStartIsBeforeOrStartEquals(
+                        items, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC)
                 .stream()
                 .collect(groupingBy(booking -> booking.getItem().getId(), toList()));
         Map<Long, List<Booking>> nextBookingsMap = bookingRepository.findByItemInAndStartIsAfter(
