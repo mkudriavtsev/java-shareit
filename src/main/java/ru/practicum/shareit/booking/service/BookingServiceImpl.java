@@ -17,7 +17,6 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BookingStatusException;
-import ru.practicum.shareit.exception.InvalidBookingTimeException;
 import ru.practicum.shareit.exception.ItemUnavailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
@@ -47,7 +46,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional
     @Override
-    public BookingDto createBooking(CreateBookingDto dto, Long userId) {
+    public BookingDto create(CreateBookingDto dto, Long userId) {
         Item item = itemRepository.findById(dto.getItemId()).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + dto.getItemId() + " not found");
         });
@@ -60,9 +59,6 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findById(userId).orElseThrow(() -> {
             throw new NotFoundException("User with id " + userId + " not found");
         });
-        if (dto.getStart().isAfter(dto.getEnd())) {
-            throw new InvalidBookingTimeException("The end date of the booking cannot be earlier than the start date");
-        }
         Booking booking = bookingMapper.toEntity(dto);
         booking.setItem(item);
         booking.setBooker(user);
@@ -88,13 +84,12 @@ public class BookingServiceImpl implements BookingService {
         } else {
             booking.setStatus(Status.REJECTED);
         }
-        Booking updatedBooking = bookingRepository.save(booking);
-        log.info("Booking status with id " + updatedBooking.getId() + " changed to " + updatedBooking.getStatus());
-        return bookingMapper.toBookingDto(updatedBooking);
+        log.info("Booking status with id " + booking.getId() + " changed to " + booking.getStatus());
+        return bookingMapper.toBookingDto(booking);
     }
 
     @Override
-    public BookingDto getBookingById(Long id, Long userId) {
+    public BookingDto getById(Long id, Long userId) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("Booking with id " + id + " not found");
         });
@@ -106,7 +101,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllBookingsForUserByState(GetBookingRequest request) {
+    public List<BookingDto> getAllForUserByState(GetBookingRequest request) {
         Long userId = request.getUserId();
         userService.checkUserExist(userId);
         PageRequest pageRequest = PageRequest.of(
@@ -116,7 +111,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllBookingsForOwnerByState(GetBookingRequest request) {
+    public List<BookingDto> getAllForOwnerByState(GetBookingRequest request) {
         Long ownerId = request.getUserId();
         userService.checkUserExist(ownerId);
         PageRequest pageRequest = PageRequest.of(

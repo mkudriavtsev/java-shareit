@@ -14,10 +14,10 @@ public interface ItemRequestMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "requester", ignore = true)
-    @Mapping(target = "items", ignore = true)
     @Mapping(target = "created", ignore = true)
     ItemRequest toEntity(CreateItemRequestDto dto);
 
+    @Mapping(target = "items", ignore = true)
     ItemRequestDto toDto(ItemRequest itemRequest);
 
     List<ItemRequestDto> toDtoList(List<ItemRequest> itemRequests);

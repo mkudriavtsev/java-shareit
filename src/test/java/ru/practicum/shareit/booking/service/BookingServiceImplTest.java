@@ -20,7 +20,6 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BookingStatusException;
-import ru.practicum.shareit.exception.InvalidBookingTimeException;
 import ru.practicum.shareit.exception.ItemUnavailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.mapper.ItemMapper;
@@ -65,7 +64,7 @@ class BookingServiceImplTest {
     private ArgumentCaptor<Booking> bookingArgumentCaptor;
 
     @Test
-    void createBooking_whenInvoked_thenSavedUser() {
+    void create_whenInvoked_thenSavedUser() {
         Long userId = 2L;
         CreateBookingDto createBookingDto = getCreateBookingDto();
         Item expectedItem = getItem();
@@ -85,7 +84,7 @@ class BookingServiceImplTest {
         BookingDto expectedBookingDto = bookingMapper.toBookingDto(bookingToSave);
         expectedBookingDto.setId(1L);
 
-        BookingDto actualBookingDto = bookingService.createBooking(createBookingDto, userId);
+        BookingDto actualBookingDto = bookingService.create(createBookingDto, userId);
 
         assertEquals(expectedBookingDto, actualBookingDto);
         verify(bookingRepository).save(bookingArgumentCaptor.capture());
@@ -94,30 +93,30 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_whenItemNotFound_thenNotFoundExceptionThrown() {
+    void create_whenItemNotFound_thenNotFoundExceptionThrown() {
         Long userId = 2L;
         CreateBookingDto createBookingDto = getCreateBookingDto();
         when(itemRepository.findById(createBookingDto.getItemId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> bookingService.createBooking(createBookingDto, userId));
+                () -> bookingService.create(createBookingDto, userId));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
-    void createBooking_whenOwnerCreateBooking_thenNotFoundExceptionThrown() {
+    void create_whenOwnerCreateBooking_thenNotFoundExceptionThrown() {
         Long userId = 1L;
         CreateBookingDto createBookingDto = getCreateBookingDto();
         Item item = getItem();
         when(itemRepository.findById(createBookingDto.getItemId())).thenReturn(Optional.of(item));
 
         assertThrows(NotFoundException.class,
-                () -> bookingService.createBooking(createBookingDto, userId));
+                () -> bookingService.create(createBookingDto, userId));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
-    void createBooking_whenItemUnavailable_thenItemUnavailableExceptionThrown() {
+    void create_whenItemUnavailable_thenItemUnavailableExceptionThrown() {
         Long userId = 2L;
         CreateBookingDto createBookingDto = getCreateBookingDto();
         Item item = getItem();
@@ -125,12 +124,12 @@ class BookingServiceImplTest {
         when(itemRepository.findById(createBookingDto.getItemId())).thenReturn(Optional.of(item));
 
         assertThrows(ItemUnavailableException.class,
-                () -> bookingService.createBooking(createBookingDto, userId));
+                () -> bookingService.create(createBookingDto, userId));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
-    void createBooking_whenUserNotFound_thenNotFoundExceptionThrown() {
+    void create_whenUserNotFound_thenNotFoundExceptionThrown() {
         Long userId = 0L;
         CreateBookingDto createBookingDto = getCreateBookingDto();
         Item item = getItem();
@@ -139,24 +138,7 @@ class BookingServiceImplTest {
 
 
         assertThrows(NotFoundException.class,
-                () -> bookingService.createBooking(createBookingDto, userId));
-        verify(bookingRepository, never()).save(any(Booking.class));
-    }
-
-    @Test
-    void createBooking_whenStartAfterEnd_thenInvalidBookingTimeExceptionThrown() {
-        Long userId = 2L;
-        CreateBookingDto createBookingDto = getCreateBookingDto();
-        createBookingDto.setStart(LocalDateTime.now().plusDays(3L));
-        createBookingDto.setEnd(LocalDateTime.now());
-        Item item = getItem();
-        User user = getUser();
-        user.setId(2L);
-        when(itemRepository.findById(createBookingDto.getItemId())).thenReturn(Optional.of(item));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        assertThrows(InvalidBookingTimeException.class,
-                () -> bookingService.createBooking(createBookingDto, userId));
+                () -> bookingService.create(createBookingDto, userId));
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
@@ -168,12 +150,10 @@ class BookingServiceImplTest {
         BookingDto expectedBookingDto = bookingMapper.toBookingDto(bookingToUpdate);
         expectedBookingDto.setStatus(Status.APPROVED);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingToUpdate));
-        when(bookingRepository.save(bookingToUpdate)).thenReturn(bookingToUpdate);
 
         BookingDto actualBookingDto = bookingService.setApprove(bookingId, Boolean.TRUE, ownerId);
 
         assertEquals(expectedBookingDto, actualBookingDto);
-        verify(bookingRepository).save(bookingToUpdate);
     }
 
     @Test
@@ -184,12 +164,10 @@ class BookingServiceImplTest {
         BookingDto expectedBookingDto = bookingMapper.toBookingDto(bookingToUpdate);
         expectedBookingDto.setStatus(Status.REJECTED);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingToUpdate));
-        when(bookingRepository.save(bookingToUpdate)).thenReturn(bookingToUpdate);
 
         BookingDto actualBookingDto = bookingService.setApprove(bookingId, Boolean.FALSE, ownerId);
 
         assertEquals(expectedBookingDto, actualBookingDto);
-        verify(bookingRepository).save(bookingToUpdate);
     }
 
     @Test
@@ -202,7 +180,6 @@ class BookingServiceImplTest {
 
         assertThrows(BookingStatusException.class,
                 () -> bookingService.setApprove(bookingId, Boolean.TRUE, ownerId));
-        verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
@@ -214,7 +191,6 @@ class BookingServiceImplTest {
 
         assertThrows(NotFoundException.class,
                 () -> bookingService.setApprove(bookingId, Boolean.TRUE, ownerId));
-        verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
@@ -225,59 +201,58 @@ class BookingServiceImplTest {
 
         assertThrows(NotFoundException.class,
                 () -> bookingService.setApprove(bookingId, Boolean.TRUE, ownerId));
-        verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
-    void getBookingById_whenBookingFoundAndBooker_thenReturnedBooking() {
+    void getById_whenBookingFoundAndBooker_thenReturnedBooking() {
         Long bookingId = 1L;
         Long userId = 2L;
         Booking foundedBooking = getBooking();
         BookingDto expectedDto = bookingMapper.toBookingDto(foundedBooking);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(foundedBooking));
 
-        BookingDto actualDto = bookingService.getBookingById(bookingId, userId);
+        BookingDto actualDto = bookingService.getById(bookingId, userId);
 
         assertEquals(expectedDto, actualDto);
     }
 
     @Test
-    void getBookingById_whenBookingFoundAndItemOwner_thenReturnedBooking() {
+    void getById_whenBookingFoundAndItemOwner_thenReturnedBooking() {
         Long bookingId = 1L;
         Long userId = 1L;
         Booking foundedBooking = getBooking();
         BookingDto expectedDto = bookingMapper.toBookingDto(foundedBooking);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(foundedBooking));
 
-        BookingDto actualDto = bookingService.getBookingById(bookingId, userId);
+        BookingDto actualDto = bookingService.getById(bookingId, userId);
 
         assertEquals(expectedDto, actualDto);
     }
 
     @Test
-    void getBookingById_whenBookingFoundAndAnotherUser_thenNotFoundExceptionThrown() {
+    void getById_whenBookingFoundAndAnotherUser_thenNotFoundExceptionThrown() {
         Long bookingId = 1L;
         Long userId = 0L;
         Booking foundedBooking = getBooking();
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(foundedBooking));
 
         assertThrows(NotFoundException.class,
-                () -> bookingService.getBookingById(bookingId, userId));
+                () -> bookingService.getById(bookingId, userId));
     }
 
     @Test
-    void getBookingById_whenBookingNotFound_thenNotFoundExceptionThrown() {
+    void getById_whenBookingNotFound_thenNotFoundExceptionThrown() {
         Long bookingId = 0L;
         Long userId = 1L;
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> bookingService.getBookingById(bookingId, userId));
+                () -> bookingService.getById(bookingId, userId));
     }
 
     @ParameterizedTest
     @EnumSource(RequestState.class)
-    void getAllBookingsForUserByState(RequestState state) {
+    void getAllForUserByState(RequestState state) {
         GetBookingRequest request = getBookingRequest();
         Long userId = request.getUserId();
         request.setState(state);
@@ -298,14 +273,14 @@ class BookingServiceImplTest {
         lenient().when(bookingRepository.findByBookerIdAndStatusIs(userId, Status.WAITING, pageRequest)).thenReturn(page);
         lenient().when(bookingRepository.findByBookerIdAndStatusIs(userId, Status.REJECTED, pageRequest)).thenReturn(page);
 
-        List<BookingDto> actualDtos = bookingService.getAllBookingsForUserByState(request);
+        List<BookingDto> actualDtos = bookingService.getAllForUserByState(request);
 
         assertEquals(expectedDtos, actualDtos);
     }
 
     @ParameterizedTest
     @EnumSource(RequestState.class)
-    void getAllBookingsForOwnerByState(RequestState state) {
+    void getAllForOwnerByState(RequestState state) {
         GetBookingRequest request = getBookingRequest();
         Long userId = request.getUserId();
         request.setState(state);
@@ -326,7 +301,7 @@ class BookingServiceImplTest {
         lenient().when(bookingRepository.findByItemOwnerIdAndStatusIs(userId, Status.WAITING, pageRequest)).thenReturn(page);
         lenient().when(bookingRepository.findByItemOwnerIdAndStatusIs(userId, Status.REJECTED, pageRequest)).thenReturn(page);
 
-        List<BookingDto> actualDtos = bookingService.getAllBookingsForOwnerByState(request);
+        List<BookingDto> actualDtos = bookingService.getAllForOwnerByState(request);
 
         assertEquals(expectedDtos, actualDtos);
     }

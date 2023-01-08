@@ -35,11 +35,11 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void createItem_whenInvoked_thenStatusIsCreatedAndReturnedItemDto() {
+    void create_whenInvoked_thenStatusIsCreatedAndReturnedItemDto() {
         CreateItemDto createItemDto = getCreateItemDto();
         Long ownerId = 1L;
         ItemDto savedDto = getItemDto();
-        when(itemService.createItem(createItemDto, ownerId)).thenReturn(savedDto);
+        when(itemService.create(createItemDto, ownerId)).thenReturn(savedDto);
 
         mockMvc.perform(post("/items")
                         .content(objectMapper.writeValueAsString(createItemDto))
@@ -51,12 +51,12 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void patchItem_whenItemFound_thenReturnUpdatedItemDto() {
+    void patch_whenItemFound_thenReturnUpdatedItemDto() {
         PatchItemDto patchItemDto = getPatchItemDto();
         ItemDto updatedItemDto = getUpdatedItemDto();
         Long itemId = 1L;
         Long ownerId = 1L;
-        when(itemService.patchItem(patchItemDto, ownerId)).thenReturn(updatedItemDto);
+        when(itemService.patch(patchItemDto, ownerId)).thenReturn(updatedItemDto);
 
         mockMvc.perform(patch("/items/{id}", itemId)
                         .content(objectMapper.writeValueAsString(patchItemDto))
@@ -68,12 +68,12 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void patchItem_whenNotOwnerChanges_thenStatusIsForbidden() {
+    void patch_whenNotOwnerChanges_thenStatusIsForbidden() {
         PatchItemDto patchItemDto = getPatchItemDto();
         Long itemId = 1L;
         Long ownerId = 2L;
         String error = "User with id " + ownerId + " has no rights to change this item";
-        when(itemService.patchItem(patchItemDto, ownerId)).thenThrow(new AuthorizationUserException(error));
+        when(itemService.patch(patchItemDto, ownerId)).thenThrow(new AuthorizationUserException(error));
 
         mockMvc.perform(patch("/items/{id}", itemId)
                         .content(objectMapper.writeValueAsString(patchItemDto))
@@ -85,12 +85,12 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void getItemById_whenItemFound_thenReturnedItemDto() {
+    void getById_whenItemFound_thenReturnedItemDto() {
         Long itemId = 1L;
         Long userId = 1L;
         ItemDto dto = getItemDto();
         dto.setId(1L);
-        when(itemService.getItemById(itemId, userId)).thenReturn(dto);
+        when(itemService.getById(itemId, userId)).thenReturn(dto);
 
         mockMvc.perform(get("/items/{id}", itemId)
                         .header("X-Sharer-User-Id", userId))
@@ -100,10 +100,10 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void getItemsByOwnerId() {
+    void getByOwnerId() {
         Long ownerId = 1L;
         List<ItemDto> dtoList = List.of(getItemDto());
-        when(itemService.getItemsByOwnerId(ownerId)).thenReturn(dtoList);
+        when(itemService.getByOwnerId(ownerId)).thenReturn(dtoList);
 
         mockMvc.perform(get("/items")
                         .header("X-Sharer-User-Id", ownerId))
@@ -113,7 +113,7 @@ class ItemControllerTest {
 
     @SneakyThrows
     @Test
-    void searchItems_whenItemsFound_thenReturnedListOfItemDtos() {
+    void search_whenItemsFound_thenReturnedListOfItemDtos() {
         String text = "Test";
         List<ItemDto> dtoList = List.of(getItemDto());
         when(itemService.searchItems(text)).thenReturn(dtoList);

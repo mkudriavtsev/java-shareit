@@ -8,13 +8,13 @@ import ru.practicum.shareit.item.dto.PatchItemDto;
 import java.util.List;
 
 public interface ItemService {
-    ItemDto createItem(CreateItemDto itemDto, Long ownerId);
+    ItemDto create(CreateItemDto itemDto, Long ownerId);
 
-    ItemDto patchItem(PatchItemDto itemDto, Long ownerId);
+    ItemDto patch(PatchItemDto itemDto, Long ownerId);
 
-    ItemDto getItemById(Long id, Long userId);
+    ItemDto getById(Long id, Long userId);
 
-    List<ItemDto> getItemsByOwnerId(Long ownerId);
+    List<ItemDto> getByOwnerId(Long ownerId);
 
     List<ItemDto> searchItems(String text);
 

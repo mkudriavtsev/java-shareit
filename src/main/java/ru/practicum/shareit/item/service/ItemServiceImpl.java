@@ -30,7 +30,11 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -40,6 +44,7 @@ public class ItemServiceImpl implements ItemService {
 
     private static final Sort SORT_BY_START_ASC = Sort.by(Sort.Direction.ASC, "start");
     private static final Sort SORT_BY_END_DESC = Sort.by(Sort.Direction.DESC, "end");
+    private static final Sort SORT_BY_CREATED_DESC = Sort.by(Sort.Direction.DESC, "created");
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -53,7 +58,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     @Override
-    public ItemDto createItem(CreateItemDto itemDto, Long ownerId) {
+    public ItemDto create(CreateItemDto itemDto, Long ownerId) {
         User owner = userRepository.findById(ownerId).orElseThrow(() -> {
             throw new NotFoundException("User with id " + ownerId + " not found");
         });
@@ -64,7 +69,7 @@ public class ItemServiceImpl implements ItemService {
             ItemRequest itemRequest = itemRequestRepository.findById(requestId).orElseThrow(() -> {
                 throw new NotFoundException("Request with id " + requestId + " not found");
             });
-            itemRequest.addItem(item);
+            item.setRequest(itemRequest);
         }
         Item savedItem = itemRepository.save(item);
         log.info("Item with id " + savedItem.getId() + " created");
@@ -73,7 +78,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     @Override
-    public ItemDto patchItem(PatchItemDto itemDto, Long ownerId) {
+    public ItemDto patch(PatchItemDto itemDto, Long ownerId) {
         Item item = itemRepository.findById(itemDto.getId()).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + itemDto.getId() + " not found");
         });
@@ -81,30 +86,60 @@ public class ItemServiceImpl implements ItemService {
             throw new AuthorizationUserException("User with id " + ownerId + " has no rights to change this item");
         }
         itemMapper.updateItem(itemDto, item);
-        Item updatedItem = itemRepository.save(item);
-        log.info("Item with id " + updatedItem.getId() + " updated");
-        return itemMapper.toItemDto(updatedItem);
+        log.info("Item with id " + item.getId() + " updated");
+        return itemMapper.toItemDto(item);
     }
 
     @Override
-    public ItemDto getItemById(Long id, Long userId) {
+    public ItemDto getById(Long id, Long userId) {
         Item foundedItemById = itemRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + id + " not found");
         });
         ItemDto itemDto = itemMapper.toItemDto(foundedItemById);
         if (foundedItemById.getOwner().getId().equals(userId)) {
-            setBookingsToItemDto(itemDto);
+            Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
+                    itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
+            Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
+                    itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
+            itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBooking));
+            itemDto.setNextBooking(bookingMapper.toBookingInItemDto(nextBooking));
         }
-        setCommentsToItemDto(itemDto);
+        List<CommentDto> commentDtos = commentMapper.toDtoList(commentRepository.findAllByItemId(id));
+        itemDto.setComments(commentDtos);
         return itemDto;
     }
 
     @Override
-    public List<ItemDto> getItemsByOwnerId(Long ownerId) {
+    public List<ItemDto> getByOwnerId(Long ownerId) {
         List<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId);
+        Map<Long, List<Comment>> comments = commentRepository.findByItemIn(items, SORT_BY_CREATED_DESC)
+                .stream()
+                .collect(groupingBy(comment -> comment.getItem().getId(), toList()));
+        Map<Long, List<Booking>> lastBookingsMap = bookingRepository.findByItemInAndEndIsBefore(
+                        items, LocalDateTime.now(), SORT_BY_END_DESC)
+                .stream()
+                .collect(groupingBy(booking -> booking.getItem().getId(), toList()));
+        Map<Long, List<Booking>> nextBookingsMap = bookingRepository.findByItemInAndStartIsAfter(
+                        items, LocalDateTime.now(), SORT_BY_START_ASC)
+                .stream()
+                .collect(groupingBy(booking -> booking.getItem().getId(), toList()));
         List<ItemDto> itemDtos = itemMapper.toItemDtoList(items);
-        itemDtos.forEach(this::setBookingsToItemDto);
-        itemDtos.forEach(this::setCommentsToItemDto);
+        for (ItemDto itemDto : itemDtos) {
+            List<Booking> lastBookings = lastBookingsMap.get(itemDto.getId());
+            List<Booking> nextBookings = nextBookingsMap.get(itemDto.getId());
+            List<Comment> commentList = comments.get(itemDto.getId());
+            if (Objects.nonNull(lastBookings)) {
+                itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBookings.get(0)));
+            }
+            if (Objects.nonNull(nextBookings)) {
+                itemDto.setNextBooking(bookingMapper.toBookingInItemDto(nextBookings.get(0)));
+            }
+            if (Objects.nonNull(commentList)) {
+                itemDto.setComments(commentMapper.toDtoList(commentList));
+            } else {
+                itemDto.setComments(Collections.emptyList());
+            }
+        }
         return itemDtos;
     }
 
@@ -137,19 +172,5 @@ public class ItemServiceImpl implements ItemService {
         } else {
             throw new NoBookingInPastException("You can`t add comment with 0 finished bookings");
         }
-    }
-
-    private void setBookingsToItemDto(ItemDto itemDto) {
-        Booking lastBooking = bookingRepository.findFirstByItemIdAndEndIsBefore(
-                itemDto.getId(), LocalDateTime.now(), SORT_BY_END_DESC);
-        Booking nextBooking = bookingRepository.findFirstByItemIdAndStartIsAfter(
-                itemDto.getId(), LocalDateTime.now(), SORT_BY_START_ASC);
-        itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBooking));
-        itemDto.setNextBooking(bookingMapper.toBookingInItemDto(nextBooking));
-    }
-
-    private void setCommentsToItemDto(ItemDto itemDto) {
-        List<CommentDto> commentDtos = commentMapper.toDtoList(commentRepository.findAllByItemId(itemDto.getId()));
-        itemDto.setComments(commentDtos);
     }
 }

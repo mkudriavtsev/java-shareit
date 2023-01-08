@@ -3,19 +3,15 @@ package ru.practicum.shareit.request.model;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
-@Builder
-@AllArgsConstructor
 @RequiredArgsConstructor
 @Entity
 @Table(name = "requests")
@@ -33,18 +29,9 @@ public class ItemRequest {
     @ToString.Exclude
     private User requester;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
-    @ToString.Exclude
-    private List<Item> items;
-
     @CreationTimestamp
     @Column(name = "created")
     private LocalDateTime created;
-
-    public void addItem(Item item) {
-        items.add(item);
-        item.setRequest(this);
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -33,12 +33,12 @@ class ItemRequestControllerTest {
 
     @SneakyThrows
     @Test
-    void createItemRequest_whenInvoked_thenReturnedSavedRequestDto() {
+    void create_whenInvoked_thenReturnedSavedRequestDto() {
         Long userId = 1L;
         CreateItemRequestDto requestDto = new CreateItemRequestDto();
         requestDto.setDescription("TestDescription");
         ItemRequestDto savedDto = getRequestDto();
-        when(itemRequestService.createItemRequest(requestDto, userId)).thenReturn(savedDto);
+        when(itemRequestService.create(requestDto, userId)).thenReturn(savedDto);
 
         mockMvc.perform(post("/requests")
                         .content(objectMapper.writeValueAsString(requestDto))
@@ -50,11 +50,11 @@ class ItemRequestControllerTest {
 
     @SneakyThrows
     @Test
-    void getItemRequestById_whenRequestFound_thenReturnedRequestDto() {
+    void getById_whenRequestFound_thenReturnedRequestDto() {
         Long userId = 1L;
         Long requestId = 1L;
         ItemRequestDto dto = getRequestDto();
-        when(itemRequestService.getItemRequestById(requestId, userId)).thenReturn(dto);
+        when(itemRequestService.getById(requestId, userId)).thenReturn(dto);
 
         mockMvc.perform(get("/requests/{id}", requestId)
                         .header("X-Sharer-User-Id", userId))
@@ -64,10 +64,10 @@ class ItemRequestControllerTest {
 
     @SneakyThrows
     @Test
-    void getOwnItemRequests_whenRequestsFound_thenReturnedListOfRequestDtos() {
+    void getOwn_whenRequestsFound_thenReturnedListOfRequestDtos() {
         Long userId = 1L;
         List<ItemRequestDto> dtoList = List.of(getRequestDto());
-        when(itemRequestService.getOwnItemRequests(userId)).thenReturn(dtoList);
+        when(itemRequestService.getOwn(userId)).thenReturn(dtoList);
 
         mockMvc.perform(get("/requests")
                         .header("X-Sharer-User-Id", userId))
@@ -77,12 +77,12 @@ class ItemRequestControllerTest {
 
     @SneakyThrows
     @Test
-    void getAllItemRequests_whenRequestsFound_thenReturnedListOfRequestDtos() {
+    void getAll_whenRequestsFound_thenReturnedListOfRequestDtos() {
         Long userId = 1L;
         Integer from = 0;
         Integer size = 10;
         List<ItemRequestDto> dtoList = List.of(getRequestDto());
-        when(itemRequestService.getAllItemRequests(userId, from, size)).thenReturn(dtoList);
+        when(itemRequestService.getAll(userId, from, size)).thenReturn(dtoList);
 
         mockMvc.perform(get("/requests/all")
                         .header("X-Sharer-User-Id", userId)

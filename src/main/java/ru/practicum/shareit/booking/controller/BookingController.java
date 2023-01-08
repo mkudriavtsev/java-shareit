@@ -23,9 +23,9 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto createBooking(@Valid @RequestBody CreateBookingDto dto,
-                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.createBooking(dto, userId);
+    public BookingDto create(@Valid @RequestBody CreateBookingDto dto,
+                             @RequestHeader("X-Sharer-User-Id") Long userId) {
+        return bookingService.create(dto, userId);
     }
 
     @PatchMapping("/{id}")
@@ -38,28 +38,28 @@ public class BookingController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public BookingDto getBookingById(@PathVariable Long id,
-                                     @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.getBookingById(id, userId);
+    public BookingDto getById(@PathVariable Long id,
+                              @RequestHeader("X-Sharer-User-Id") Long userId) {
+        return bookingService.getById(id, userId);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<BookingDto> getAllBookingsForUserByState(
+    public List<BookingDto> getAllForUserByState(
             @RequestParam(required = false, defaultValue = "ALL") RequestState state,
             @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
             @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size,
             @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.getAllBookingsForUserByState(GetBookingRequest.of(userId, state, from, size));
+        return bookingService.getAllForUserByState(GetBookingRequest.of(userId, state, from, size));
     }
 
     @GetMapping("/owner")
     @ResponseStatus(HttpStatus.OK)
-    public List<BookingDto> getAllBookingsForOwnerByState(
+    public List<BookingDto> getAllForOwnerByState(
             @RequestParam(required = false, defaultValue = "ALL") RequestState state,
             @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
             @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size,
             @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return bookingService.getAllBookingsForOwnerByState(GetBookingRequest.of(ownerId, state, from, size));
+        return bookingService.getAllForOwnerByState(GetBookingRequest.of(ownerId, state, from, size));
     }
 }

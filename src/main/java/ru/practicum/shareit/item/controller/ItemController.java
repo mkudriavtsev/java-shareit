@@ -24,32 +24,31 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Validated({ValidationGroup.OnCreate.class})
-    public ItemDto createItem(@Valid @RequestBody CreateItemDto dto,
-                              @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.createItem(dto, ownerId);
+    public ItemDto create(@Validated({ValidationGroup.OnCreate.class}) @RequestBody CreateItemDto dto,
+                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        return itemService.create(dto, ownerId);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto patchItem(@RequestBody PatchItemDto itemDto,
-                             @RequestHeader("X-Sharer-User-Id") Long ownerId,
-                             @PathVariable Long id) {
+    public ItemDto patch(@Validated({ValidationGroup.OnUpdate.class}) @RequestBody PatchItemDto itemDto,
+                         @RequestHeader("X-Sharer-User-Id") Long ownerId,
+                         @PathVariable Long id) {
         itemDto.setId(id);
-        return itemService.patchItem(itemDto, ownerId);
+        return itemService.patch(itemDto, ownerId);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Long userId,
-                               @PathVariable Long id) {
-        return itemService.getItemById(id, userId);
+    public ItemDto getById(@RequestHeader("X-Sharer-User-Id") Long userId,
+                           @PathVariable Long id) {
+        return itemService.getById(id, userId);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ItemDto> getItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.getItemsByOwnerId(ownerId);
+    public List<ItemDto> getByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        return itemService.getByOwnerId(ownerId);
     }
 
     @GetMapping("/search")

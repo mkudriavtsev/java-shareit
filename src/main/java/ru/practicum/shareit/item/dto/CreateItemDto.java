@@ -16,7 +16,7 @@ public class CreateItemDto {
     @NotBlank(groups = ValidationGroup.OnCreate.class)
     private String name;
 
-    @NotNull(groups = ValidationGroup.OnCreate.class)
+    @NotBlank(groups = ValidationGroup.OnCreate.class)
     private String description;
 
     @NotNull(groups = ValidationGroup.OnCreate.class)

@@ -7,13 +7,13 @@ import ru.practicum.shareit.booking.dto.GetBookingRequest;
 import java.util.List;
 
 public interface BookingService {
-    BookingDto createBooking(CreateBookingDto dto, Long userId);
+    BookingDto create(CreateBookingDto dto, Long userId);
 
     BookingDto setApprove(Long id, Boolean isApprove, Long ownerId);
 
-    BookingDto getBookingById(Long id, Long userId);
+    BookingDto getById(Long id, Long userId);
 
-    List<BookingDto> getAllBookingsForUserByState(GetBookingRequest request);
+    List<BookingDto> getAllForUserByState(GetBookingRequest request);
 
-    List<BookingDto> getAllBookingsForOwnerByState(GetBookingRequest request);
+    List<BookingDto> getAllForOwnerByState(GetBookingRequest request);
 }

@@ -45,13 +45,6 @@ public class ExceptionApiHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleInvalidBookingTimeException(InvalidBookingTimeException e) {
-        log.warn(e.getMessage());
-        return new ErrorResponse(e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleUnknownRequestState(MethodArgumentTypeMismatchException e) {
         log.warn(e.getMessage());
         return new ErrorResponse("Unknown state: " + e.getValue());

@@ -34,21 +34,21 @@ class UserServiceImplTest {
     private ArgumentCaptor<User> userArgumentCaptor;
 
     @Test
-    void createUser_whenInvoked_ThenSavedUser() {
+    void create_whenInvoked_ThenSavedUser() {
         User userToSave = getTestUser();
         UserDto userDtoToSave = getTestUserDto();
         when(userMapper.toDto(userToSave)).thenReturn(userDtoToSave);
         when(userMapper.toEntity(userDtoToSave)).thenReturn(userToSave);
         when(userRepository.save(userToSave)).thenReturn(userToSave);
 
-        UserDto actualUserDto = userService.createUser(userDtoToSave);
+        UserDto actualUserDto = userService.create(userDtoToSave);
 
         assertEquals(userDtoToSave, actualUserDto);
         verify(userRepository).save(userToSave);
     }
 
     @Test
-    void patchUser_whenUserFound_thenUpdatedUser() {
+    void patch_whenUserFound_thenUpdatedUser() {
         User foundedUser = getTestUser();
         User updatedUser = getUpdatedUser();
         UserDto updateUserDto = getUpdateUserDto();
@@ -64,7 +64,7 @@ class UserServiceImplTest {
         when(userRepository.save(foundedUser)).thenReturn(foundedUser);
         when(userMapper.toDto(foundedUser)).thenReturn(updateUserDto);
 
-        UserDto actualUserDto = userService.patchUser(updateUserDto);
+        UserDto actualUserDto = userService.patch(updateUserDto);
 
         assertEquals(updateUserDto, actualUserDto);
         verify(userRepository).save(userArgumentCaptor.capture());
@@ -73,66 +73,66 @@ class UserServiceImplTest {
     }
 
     @Test
-    void patchUser_whenUserNotFound_thenNotFoundExceptionThrown() {
+    void patch_whenUserNotFound_thenNotFoundExceptionThrown() {
         UserDto userDto = getTestUserDto();
         when(userRepository.findById(userDto.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> userService.patchUser(userDto));
+                () -> userService.patch(userDto));
     }
 
     @Test
-    void getUserById_whenUserFound_ThenReturnedUser() {
+    void getById_whenUserFound_ThenReturnedUser() {
         Long userId = 1L;
         User expectedUser = getTestUser();
         UserDto expectedUserDto = getTestUserDto();
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
         when(userMapper.toDto(expectedUser)).thenReturn(expectedUserDto);
 
-        UserDto actualUserDto = userService.getUserById(userId);
+        UserDto actualUserDto = userService.getById(userId);
 
         assertEquals(expectedUserDto, actualUserDto);
     }
 
     @Test
-    void getUserById_whenUserNotFound_thenNotFoundExceptionThrown() {
+    void getById_whenUserNotFound_thenNotFoundExceptionThrown() {
         Long userId = 0L;
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> userService.getUserById(userId));
+                () -> userService.getById(userId));
     }
 
     @Test
-    void getAllUsers_whenInvoked_ThenReturnListOfUsers() {
+    void getAll_whenInvoked_ThenReturnListOfUsers() {
         List<User> expectedUsers = List.of(getTestUser());
         List<UserDto> expectedUserDtos = List.of(getTestUserDto());
         when(userRepository.findAll()).thenReturn(expectedUsers);
         when(userMapper.toUserDtoList(expectedUsers)).thenReturn(expectedUserDtos);
 
-        List<UserDto> actualUserDtos = userService.getAllUsers();
+        List<UserDto> actualUserDtos = userService.getAll();
 
         assertEquals(expectedUserDtos, actualUserDtos);
     }
 
     @Test
-    void deleteUserById_whenUserFound_ThenDeleteByIdInvoked() {
+    void deleteById_whenUserFound_ThenDeleteByIdInvoked() {
         Long userId = 1L;
         User user = getTestUser();
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        userService.deleteUserById(userId);
+        userService.deleteById(userId);
 
         verify(userRepository).deleteById(userId);
     }
 
     @Test
-    void deleteUserById_whenUserNotFound_thenNotFoundExceptionThrown() {
+    void deleteById_whenUserNotFound_thenNotFoundExceptionThrown() {
         Long userId = 0L;
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> userService.deleteUserById(userId));
+                () -> userService.deleteById(userId));
     }
 
     User getTestUser() {

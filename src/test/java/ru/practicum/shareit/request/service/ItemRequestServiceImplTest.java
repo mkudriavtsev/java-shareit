@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.CreateItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
@@ -23,6 +25,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +41,8 @@ class ItemRequestServiceImplTest {
     @Mock
     private ItemRequestRepository itemRequestRepository;
     @Mock
+    private ItemRepository itemRepository;
+    @Mock
     private UserRepository userRepository;
     @Mock
     private UserService userService;
@@ -48,7 +53,7 @@ class ItemRequestServiceImplTest {
     private ItemMapper itemMapper = Mappers.getMapper(ItemMapper.class);
 
     @Test
-    void createItemRequest_whenInvoked_thenSavedItemRequest() {
+    void create_whenInvoked_thenSavedItemRequest() {
         Long userId = 1L;
         CreateItemRequestDto dto = new CreateItemRequestDto();
         dto.setDescription("TestDescription");
@@ -64,75 +69,83 @@ class ItemRequestServiceImplTest {
         }).when(itemRequestRepository).save(any(ItemRequest.class));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        ItemRequestDto actualRequestDto = itemRequestService.createItemRequest(dto, userId);
+        ItemRequestDto actualRequestDto = itemRequestService.create(dto, userId);
 
         assertEquals(expectedRequestDto, actualRequestDto);
         verify(itemRequestRepository).save(requestToSave);
     }
 
     @Test
-    void createItemRequest_whenUserNotFound_thenNotFoundExceptionThrown() {
+    void create_whenUserNotFound_thenNotFoundExceptionThrown() {
         Long userId = 0L;
         CreateItemRequestDto dto = new CreateItemRequestDto();
         dto.setDescription("TestDescription");
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemRequestService.createItemRequest(dto, userId));
+                () -> itemRequestService.create(dto, userId));
         verify(itemRequestRepository, never()).save(any(ItemRequest.class));
     }
 
     @Test
-    void getItemRequestById_whenItemRequestFound_thenReturnItemRequestDto() {
+    void getById_whenItemRequestFound_thenReturnItemRequestDto() {
         Long userId = 1L;
         Long itemRequestId = 1L;
         ItemRequest foundedRequest = getItemRequest();
         ItemRequestDto expectedDto = itemRequestMapper.toDto(foundedRequest);
+        expectedDto.setItems(Collections.emptyList());
         doNothing().when(userService).checkUserExist(userId);
         when(itemRequestRepository.findById(itemRequestId)).thenReturn(Optional.of(foundedRequest));
+        when(itemRepository.findAllByRequestId(itemRequestId)).thenReturn(Collections.emptyList());
 
-        ItemRequestDto actualDto = itemRequestService.getItemRequestById(itemRequestId, userId);
+        ItemRequestDto actualDto = itemRequestService.getById(itemRequestId, userId);
 
         assertEquals(expectedDto, actualDto);
     }
 
     @Test
-    void getItemRequestById_whenItemRequestNotFound_thenNotFoundExceptionThrown() {
+    void getById_whenItemRequestNotFound_thenNotFoundExceptionThrown() {
         Long userId = 1L;
         Long itemRequestId = 1L;
         doNothing().when(userService).checkUserExist(userId);
         when(itemRequestRepository.findById(itemRequestId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemRequestService.getItemRequestById(itemRequestId, userId));
+                () -> itemRequestService.getById(itemRequestId, userId));
     }
 
     @Test
-    void getOwnItemRequests_whenInvoked_thenReturnListOfOwnItemRequestDtos() {
+    void getOwn_whenInvoked_thenReturnListOfOwnItemRequestDtos() {
         Long userId = 1L;
         doNothing().when(userService).checkUserExist(userId);
         List<ItemRequest> foundedItemRequests = List.of(getItemRequest());
+        List<Item> items = List.of(getTestItem());
         List<ItemRequestDto> expectedDtos = itemRequestMapper.toDtoList(foundedItemRequests);
+        expectedDtos.get(0).setItems(itemMapper.toItemInRequestDtoList(items));
         when(itemRequestRepository.findByRequesterIdOrderByCreatedDesc(userId)).thenReturn(foundedItemRequests);
+        when(itemRepository.findByRequestIn(foundedItemRequests)).thenReturn(items);
 
-        List<ItemRequestDto> actualDtos = itemRequestService.getOwnItemRequests(userId);
+        List<ItemRequestDto> actualDtos = itemRequestService.getOwn(userId);
 
         assertEquals(expectedDtos, actualDtos);
     }
 
     @Test
-    void getAllItemRequests_whenInvoked_thenReturnListOfAllItemRequestDtos() {
+    void getAll_whenInvoked_thenReturnListOfAllItemRequestDtos() {
         Long userId = 1L;
         Integer from = 0;
         Integer size = 10;
         List<ItemRequest> foundedItemRequests = List.of(getItemRequest());
+        List<Item> items = List.of(getTestItem());
         PageRequest pageRequest = PageRequest.of((from / size), size, Sort.by("created").descending());
         Page<ItemRequest> page = new PageImpl<>(foundedItemRequests);
         List<ItemRequestDto> expectedDtos = itemRequestMapper.toDtoList(foundedItemRequests);
+        expectedDtos.get(0).setItems(itemMapper.toItemInRequestDtoList(items));
         doNothing().when(userService).checkUserExist(userId);
         when(itemRequestRepository.findByRequesterIdIsNot(userId, pageRequest)).thenReturn(page);
+        when(itemRepository.findByRequestIn(foundedItemRequests)).thenReturn(items);
 
-        List<ItemRequestDto> actualDtos = itemRequestService.getAllItemRequests(userId, from, size);
+        List<ItemRequestDto> actualDtos = itemRequestService.getAll(userId, from, size);
 
         assertEquals(expectedDtos, actualDtos);
     }
@@ -150,5 +163,15 @@ class ItemRequestServiceImplTest {
         request.setRequester(getUser());
         request.setCreated(LocalDateTime.now());
         return request;
+    }
+
+    Item getTestItem() {
+        return Item.builder()
+                .id(1L)
+                .name("TestName")
+                .description("TestDescription")
+                .available(Boolean.TRUE)
+                .request(getItemRequest())
+                .build();
     }
 }

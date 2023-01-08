@@ -14,7 +14,6 @@ import ru.practicum.shareit.booking.dto.GetBookingRequest;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.BookingStatusException;
-import ru.practicum.shareit.exception.InvalidBookingTimeException;
 import ru.practicum.shareit.exception.ItemUnavailableException;
 
 import java.time.LocalDateTime;
@@ -38,13 +37,13 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void createBooking_whenCorrectCreateBookingDto_thenReturnedSavedBookingDto() {
+    void create_whenCorrectCreateBookingDto_thenReturnedSavedBookingDto() {
         CreateBookingDto createBookingDto = getCreateBookingDto();
         BookingDto savedBookingDto = getBookingDto();
         savedBookingDto.setStart(createBookingDto.getStart());
         savedBookingDto.setEnd(createBookingDto.getEnd());
         Long userId = 1L;
-        when(bookingService.createBooking(createBookingDto, userId)).thenReturn(savedBookingDto);
+        when(bookingService.create(createBookingDto, userId)).thenReturn(savedBookingDto);
 
         mockMvc.perform(post("/bookings")
                         .content(objectMapper.writeValueAsString(createBookingDto))
@@ -56,11 +55,11 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void createBooking_whenItemUnavailable_thenStatusIsBadRequest() {
+    void create_whenItemUnavailable_thenStatusIsBadRequest() {
         CreateBookingDto createBookingDto = getCreateBookingDto();
         Long userId = 1L;
         String error = "Item with id " + createBookingDto.getItemId() + " not available";
-        when(bookingService.createBooking(createBookingDto, userId)).thenThrow(new ItemUnavailableException(error));
+        when(bookingService.create(createBookingDto, userId)).thenThrow(new ItemUnavailableException(error));
 
         mockMvc.perform(post("/bookings")
                         .content(objectMapper.writeValueAsString(createBookingDto))
@@ -72,19 +71,33 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void createBooking_whenStartAfterEnd_thenStatusIsBadRequest() {
+    void create_whenStartEqualsEnd_thenStatusIsBadRequest() {
+        LocalDateTime date = LocalDateTime.now().plusDays(1);
         CreateBookingDto createBookingDto = getCreateBookingDto();
-        createBookingDto.setStart(createBookingDto.getStart().plusDays(5L));
+        createBookingDto.setStart(date);
+        createBookingDto.setEnd(date);
         Long userId = 1L;
-        String error = "The end date of the booking cannot be earlier than the start date";
-        when(bookingService.createBooking(createBookingDto, userId)).thenThrow(new InvalidBookingTimeException(error));
 
         mockMvc.perform(post("/bookings")
                         .content(objectMapper.writeValueAsString(createBookingDto))
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", userId))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is(error)));
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    void create_whenStartAfterEnd_thenStatusIsBadRequest() {
+        CreateBookingDto createBookingDto = getCreateBookingDto();
+        createBookingDto.setStart(LocalDateTime.now().plusDays(5));
+        createBookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        Long userId = 1L;
+
+        mockMvc.perform(post("/bookings")
+                        .content(objectMapper.writeValueAsString(createBookingDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Sharer-User-Id", userId))
+                .andExpect(status().isBadRequest());
     }
 
     @SneakyThrows
@@ -120,11 +133,11 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void getBookingById_whenBookingFound_thenReturnedBookingDto() {
+    void getById_whenBookingFound_thenReturnedBookingDto() {
         Long bookingId = 1L;
         Long userId = 1L;
         BookingDto dto = getBookingDto();
-        when(bookingService.getBookingById(bookingId, userId)).thenReturn(dto);
+        when(bookingService.getById(bookingId, userId)).thenReturn(dto);
 
         mockMvc.perform(get("/bookings/{id}", bookingId)
                         .header("X-Sharer-User-Id", userId))
@@ -134,13 +147,13 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void getAllBookingsForUserByState_whenStateIsCorrect_thenReturnedListOfBookingDtos() {
+    void getAllForUserByState_whenStateIsCorrect_thenReturnedListOfBookingDtos() {
         RequestState state = RequestState.ALL;
         Integer from = 0;
         Integer size = 10;
         Long userId = 1L;
         List<BookingDto> dtoList = List.of(getBookingDto());
-        when(bookingService.getAllBookingsForUserByState(GetBookingRequest.of(userId, state, from, size)))
+        when(bookingService.getAllForUserByState(GetBookingRequest.of(userId, state, from, size)))
                 .thenReturn(dtoList);
 
         mockMvc.perform(get("/bookings/")
@@ -154,7 +167,7 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void getAllBookingsForUserByState_whenStateIsIncorrect_thenStatusIsBadRequest() {
+    void getAllForUserByState_whenStateIsIncorrect_thenStatusIsBadRequest() {
         String state = "UNKNOWN";
         Integer from = 0;
         Integer size = 10;
@@ -173,13 +186,13 @@ class BookingControllerTest {
 
     @SneakyThrows
     @Test
-    void getAllBookingsForOwnerByState_whenStateIsCorrect_thenReturnedListOfBookingDtos() {
+    void getAllForOwnerByState_whenStateIsCorrect_thenReturnedListOfBookingDtos() {
         RequestState state = RequestState.ALL;
         Integer from = 0;
         Integer size = 10;
         Long ownerId = 1L;
         List<BookingDto> dtoList = List.of(getBookingDto());
-        when(bookingService.getAllBookingsForOwnerByState(GetBookingRequest.of(ownerId, state, from, size)))
+        when(bookingService.getAllForOwnerByState(GetBookingRequest.of(ownerId, state, from, size)))
                 .thenReturn(dtoList);
 
         mockMvc.perform(get("/bookings/owner")

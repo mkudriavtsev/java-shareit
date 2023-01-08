@@ -6,8 +6,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
+import ru.practicum.shareit.item.model.Item;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -57,4 +59,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                                       Long bookerId,
                                                                       Status status,
                                                                       LocalDateTime end);
+
+    List<Booking> findByItemInAndEndIsBefore(List<Item> items, LocalDateTime end, Sort sort);
+
+    List<Booking> findByItemInAndStartIsAfter(List<Item> items, LocalDateTime start, Sort sort);
 }

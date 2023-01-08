@@ -29,7 +29,6 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -59,12 +58,10 @@ class ItemServiceImplTest {
     @Mock
     private CommentMapper commentMapper;
     @Captor
-    private ArgumentCaptor<Item> itemArgumentCaptor;
-    @Captor
     private ArgumentCaptor<Comment> commentArgumentCaptor;
 
     @Test
-    void createItem_whenRequestIsNull_thenItemSaved() {
+    void create_whenRequestIsNull_thenItemSaved() {
         Long ownerId = 1L;
         User owner = getTestUser();
         Item itemToSave = getTestItem();
@@ -75,24 +72,24 @@ class ItemServiceImplTest {
         when(itemRepository.save(itemToSave)).thenReturn(itemToSave);
         when(itemMapper.toItemDto(itemToSave)).thenReturn(expectedItemDto);
 
-        ItemDto actualItemDto = itemService.createItem(createItemDto, ownerId);
+        ItemDto actualItemDto = itemService.create(createItemDto, ownerId);
 
         assertEquals(expectedItemDto, actualItemDto);
         verify(itemRepository).save(itemToSave);
     }
 
     @Test
-    void createItem_whenOwnerNotFound_thenNotFoundExceptionThrown() {
+    void create_whenOwnerNotFound_thenNotFoundExceptionThrown() {
         Long ownerId = 1L;
         CreateItemDto createItemDto = getCreateItemDto();
         when(userRepository.findById(ownerId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemService.createItem(createItemDto, ownerId));
+                () -> itemService.create(createItemDto, ownerId));
     }
 
     @Test
-    void createItem_whenRequestFound_thenItemSaved() {
+    void create_whenRequestFound_thenItemSaved() {
         Long ownerId = 1L;
         User owner = getTestUser();
         Item itemToSave = getTestItem();
@@ -111,7 +108,7 @@ class ItemServiceImplTest {
         }).when(itemRepository).save(itemToSave);
         when(itemMapper.toItemDto(itemToSave)).thenReturn(expectedItemDto);
 
-        ItemDto actualItemDto = itemService.createItem(createItemDto, ownerId);
+        ItemDto actualItemDto = itemService.create(createItemDto, ownerId);
 
         assertEquals(expectedItemDto, actualItemDto);
         assertEquals(1L, itemToSave.getId());
@@ -119,7 +116,7 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void createItem_whenRequestNotFound_thenNotFoundExceptionThrown() {
+    void create_whenRequestNotFound_thenNotFoundExceptionThrown() {
         Long ownerId = 1L;
         User owner = getTestUser();
         Item itemToSave = getTestItem();
@@ -130,18 +127,17 @@ class ItemServiceImplTest {
         when(itemRequestRepository.findById(createItemDto.getRequestId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemService.createItem(createItemDto, ownerId));
+                () -> itemService.create(createItemDto, ownerId));
         verify(itemRepository, never()).save(itemToSave);
     }
 
 
     @Test
-    void patchItem_whenItemFound_thenUpdateItem() {
+    void patch_whenItemFound_thenUpdateItem() {
         Item foundedItem = getTestItem();
         foundedItem.setId(1L);
         User owner = getTestUser();
         foundedItem.setOwner(owner);
-        Item updatedItem = getUpdatedItem();
         ItemDto updatedItemDto = getUpdatedItemDto();
         PatchItemDto patchItemDto = getPatchItem();
         when(itemRepository.findById(patchItemDto.getId())).thenReturn(Optional.of(foundedItem));
@@ -153,30 +149,25 @@ class ItemServiceImplTest {
             item.setAvailable(itemDto.getAvailable());
             return null;
         }).when(itemMapper).updateItem(patchItemDto, foundedItem);
-        when(itemRepository.save(foundedItem)).thenReturn(foundedItem);
         when(itemMapper.toItemDto(foundedItem)).thenReturn(updatedItemDto);
 
-        ItemDto actualItemDto = itemService.patchItem(patchItemDto, 1L);
+        ItemDto actualItemDto = itemService.patch(patchItemDto, 1L);
 
         assertEquals(updatedItemDto, actualItemDto);
-        verify(itemRepository).save(itemArgumentCaptor.capture());
-        Item savedItem = itemArgumentCaptor.getValue();
-        assertEquals(updatedItem, savedItem);
     }
 
     @Test
-    void patchItem_whenItemNotFound_thenNotFoundExceptionThrown() {
+    void patch_whenItemNotFound_thenNotFoundExceptionThrown() {
         PatchItemDto patchItemDto = getPatchItem();
         Long ownerId = 1L;
         when(itemRepository.findById(patchItemDto.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemService.patchItem(patchItemDto, ownerId));
-        verify(itemRepository, never()).save(Mockito.any());
+                () -> itemService.patch(patchItemDto, ownerId));
     }
 
     @Test
-    void patchItem_whenNotOwnerChanges_thenAuthorizationUserExceptionThrown() {
+    void patch_whenNotOwnerChanges_thenAuthorizationUserExceptionThrown() {
         PatchItemDto patchItemDto = getPatchItem();
         Long ownerId = 0L;
         Item foundedItem = getTestItem();
@@ -186,12 +177,11 @@ class ItemServiceImplTest {
         when(itemRepository.findById(patchItemDto.getId())).thenReturn(Optional.of(foundedItem));
 
         assertThrows(AuthorizationUserException.class,
-                () -> itemService.patchItem(patchItemDto, ownerId));
-        verify(itemRepository, never()).save(Mockito.any());
+                () -> itemService.patch(patchItemDto, ownerId));
     }
 
     @Test
-    void getItemById_whenItemFoundAndNotOwner_thenReturnedItemWithoutBookings() {
+    void getById_whenItemFoundAndNotOwner_thenReturnedItemWithoutBookings() {
         Long userId = 0L;
         Long itemId = 1L;
         Item foundedItem = getTestItem();
@@ -204,7 +194,7 @@ class ItemServiceImplTest {
         when(itemMapper.toItemDto(foundedItem)).thenReturn(expectedItemDto);
         setupComments();
 
-        ItemDto actualItemDto = itemService.getItemById(itemId, userId);
+        ItemDto actualItemDto = itemService.getById(itemId, userId);
 
         assertEquals(expectedItemDto, actualItemDto);
         assertNull(actualItemDto.getLastBooking());
@@ -212,7 +202,7 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void getItemById_whenItemFoundAndOwner_thenReturnedItemWithoutBookings() {
+    void getById_whenItemFoundAndOwner_thenReturnedItemWithoutBookings() {
         Long userId = 1L;
         Long itemId = 1L;
         Item foundedItem = getTestItem();
@@ -226,7 +216,7 @@ class ItemServiceImplTest {
         setupComments();
         setupBookings();
 
-        ItemDto actualItemDto = itemService.getItemById(itemId, userId);
+        ItemDto actualItemDto = itemService.getById(itemId, userId);
 
         assertEquals(expectedItemDto, actualItemDto);
         assertEquals(1L, actualItemDto.getLastBooking().getId());
@@ -234,17 +224,17 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void getItemById_whenItemNotFoundAndOwner_thenNotFoundExceptionThrown() {
+    void getById_whenItemNotFoundAndOwner_thenNotFoundExceptionThrown() {
         Long userId = 1L;
         Long itemId = 0L;
         when(itemRepository.findById(itemId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> itemService.getItemById(itemId, userId));
+                () -> itemService.getById(itemId, userId));
     }
 
     @Test
-    void getItemsByOwnerId_whenInvoked_thenReturnListOfItemDtos() {
+    void getByOwnerId_withoutBookingsAndComments_thenReturnListOfItemDtos() {
         Long ownerId = 1L;
         Item item = getTestItem();
         item.setId(1L);
@@ -254,16 +244,59 @@ class ItemServiceImplTest {
         List<ItemDto> expectedItemDtos = List.of(itemDto);
         when(itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId)).thenReturn(items);
         when(itemMapper.toItemDtoList(items)).thenReturn(expectedItemDtos);
-        setupComments();
-        setupBookings();
 
-        List<ItemDto> actualItemDtos = itemService.getItemsByOwnerId(ownerId);
+        List<ItemDto> actualItemDtos = itemService.getByOwnerId(ownerId);
 
         assertEquals(expectedItemDtos, actualItemDtos);
     }
 
     @Test
-    void searchItems_whenItemsFound_thenReturnListOfItemDtos() {
+    void getByOwnerId_withBookingsAndComments_thenReturnListOfItemDtos() {
+        Long ownerId = 1L;
+        Item item = getTestItem();
+        item.setId(1L);
+        ItemDto itemDto = getItemDto();
+        itemDto.setId(1L);
+        List<Item> items = List.of(item);
+        List<ItemDto> expectedItemDtos = List.of(itemDto);
+        Comment comment = getTestComment();
+        comment.setItem(item);
+        comment.setId(1L);
+        CommentDto commentDto = getCommentDto();
+        commentDto.setId(1L);
+        List<CommentDto> commentDtos = List.of(commentDto);
+        expectedItemDtos.get(0).setComments(commentDtos);
+
+        Booking lastBooking = new Booking();
+        lastBooking.setId(1L);
+        lastBooking.setItem(item);
+        Booking nextBooking = new Booking();
+        nextBooking.setId(2L);
+        nextBooking.setItem(item);
+        BookingInItemDto lastBookingInItemDto = new BookingInItemDto();
+        lastBookingInItemDto.setId(1L);
+        BookingInItemDto nextBookingInItemDto = new BookingInItemDto();
+        nextBookingInItemDto.setId(2L);
+        expectedItemDtos.get(0).setLastBooking(lastBookingInItemDto);
+        expectedItemDtos.get(0).setNextBooking(nextBookingInItemDto);
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId)).thenReturn(items);
+        when(itemMapper.toItemDtoList(items)).thenReturn(expectedItemDtos);
+        when(commentRepository.findByItemIn(eq(items),any(Sort.class))).thenReturn(List.of(comment));
+        when(commentMapper.toDtoList(anyList())).thenReturn(commentDtos);
+        when(bookingRepository.findByItemInAndEndIsBefore(eq(items),any(LocalDateTime.class),any(Sort.class)))
+                .thenReturn(List.of(lastBooking));
+        when(bookingRepository.findByItemInAndStartIsAfter(eq(items),any(LocalDateTime.class),any(Sort.class)))
+                .thenReturn(List.of(nextBooking));
+        when(bookingMapper.toBookingInItemDto(lastBooking)).thenReturn(lastBookingInItemDto);
+        when(bookingMapper.toBookingInItemDto(nextBooking)).thenReturn(nextBookingInItemDto);
+
+        List<ItemDto> actualItemDtos = itemService.getByOwnerId(ownerId);
+
+        assertEquals(expectedItemDtos, actualItemDtos);
+    }
+
+    @Test
+    void search_whenItemsFound_thenReturnListOfItemDtos() {
         List<Item> foundedItems = List.of(getTestItem());
         List<ItemDto> expectedItemDtos = List.of(getItemDto());
         String text = "Test";
@@ -276,7 +309,7 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void searchItems_whenSearchTextIsBlank_thenReturnEmptyList() {
+    void search_whenSearchTextIsBlank_thenReturnEmptyList() {
         String text = "";
 
         List<ItemDto> actualItemDtos = itemService.searchItems(text);
@@ -393,21 +426,11 @@ class ItemServiceImplTest {
     }
 
     ItemRequest getTestItemRequest() {
-        return ItemRequest.builder()
-                .id(1L)
-                .description("TestDescription")
-                .created(LocalDateTime.now())
-                .items(new ArrayList<>())
-                .build();
-    }
-
-    Item getUpdatedItem() {
-        return Item.builder()
-                .id(1L)
-                .name("UpdatedName")
-                .description("UpdatedDescription")
-                .available(Boolean.TRUE)
-                .build();
+        ItemRequest request = new ItemRequest();
+        request.setId(1L);
+        request.setDescription("TestDescription");
+        request.setCreated(LocalDateTime.now());
+        return request;
     }
 
     PatchItemDto getPatchItem() {

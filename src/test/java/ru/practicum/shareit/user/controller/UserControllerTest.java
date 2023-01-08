@@ -31,9 +31,9 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void createUser_whenInvoked_thenStatusIsCreatedAndReturnedUserDto() {
+    void create_whenInvoked_thenStatusIsCreatedAndReturnedUserDto() {
         UserDto dto = getTestUserDto();
-        when(userService.createUser(dto)).thenReturn(dto);
+        when(userService.create(dto)).thenReturn(dto);
 
         mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(dto))
@@ -44,10 +44,10 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void patchUser_whenInvoked_thenStatusIsOkAndReturnedUserDto() {
+    void patch_whenInvoked_thenStatusIsOkAndReturnedUserDto() {
         Long userId = 1L;
         UserDto dto = getTestUserDto();
-        when(userService.patchUser(dto)).thenReturn(dto);
+        when(userService.patch(dto)).thenReturn(dto);
 
         mockMvc.perform(patch("/users/{id}", userId)
                         .content(objectMapper.writeValueAsString(dto))
@@ -58,10 +58,10 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void getUserById_whenUserFound_thenReturnedUserDto() {
+    void getById_whenUserFound_thenReturnedUserDto() {
         Long userId = 1L;
         UserDto dto = getTestUserDto();
-        when(userService.getUserById(userId)).thenReturn(dto);
+        when(userService.getById(userId)).thenReturn(dto);
 
         mockMvc.perform(get("/users/{id}", userId))
                 .andExpect(status().isOk())
@@ -70,10 +70,10 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void getUserById_whenUserNotFound_thenStatusNotFound() {
+    void getById_whenUserNotFound_thenStatusNotFound() {
         Long userId = 0L;
         String errorMessage = "User with id " + userId + " not found";
-        when(userService.getUserById(userId)).thenThrow(new NotFoundException(errorMessage));
+        when(userService.getById(userId)).thenThrow(new NotFoundException(errorMessage));
 
         mockMvc.perform(get("/users/{id}", userId))
                 .andExpect(status().isNotFound())
@@ -82,9 +82,9 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void getAllUsers_whenUsersFound_thenReturnedListOfUsersDto() {
+    void getAll_whenUsersFound_thenReturnedListOfUsersDto() {
         List<UserDto> dtoList = List.of(getTestUserDto());
-        when(userService.getAllUsers()).thenReturn(dtoList);
+        when(userService.getAll()).thenReturn(dtoList);
 
         mockMvc.perform(get("/users"))
                 .andExpect(status().isOk())
@@ -93,13 +93,13 @@ class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void deleteUserById_whenUserFound_thenStatusIsOk() {
+    void deleteById_whenUserFound_thenStatusIsOk() {
         Long userId = 1L;
-        doNothing().when(userService).deleteUserById(userId);
+        doNothing().when(userService).deleteById(userId);
 
         mockMvc.perform(delete("/users/{id}", userId))
                 .andExpect(status().isOk());
-        verify(userService).deleteUserById(userId);
+        verify(userService).deleteById(userId);
     }
 
     UserDto getTestUserDto() {

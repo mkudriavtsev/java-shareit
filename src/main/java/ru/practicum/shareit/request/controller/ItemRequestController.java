@@ -22,30 +22,30 @@ public class ItemRequestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public ItemRequestDto createItemRequest(@Valid @RequestBody CreateItemRequestDto dto,
-                                            @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemRequestService.createItemRequest(dto, userId);
+    public ItemRequestDto create(@Valid @RequestBody CreateItemRequestDto dto,
+                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
+        return itemRequestService.create(dto, userId);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemRequestDto getItemRequestById(@PathVariable Long id,
-                                             @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemRequestService.getItemRequestById(id, userId);
+    public ItemRequestDto getById(@PathVariable Long id,
+                                  @RequestHeader("X-Sharer-User-Id") Long userId) {
+        return itemRequestService.getById(id, userId);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ItemRequestDto> getOwnItemRequests(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemRequestService.getOwnItemRequests(userId);
+    public List<ItemRequestDto> getOwn(@RequestHeader("X-Sharer-User-Id") Long userId) {
+        return itemRequestService.getOwn(userId);
     }
 
     @GetMapping("/all")
     @ResponseStatus(HttpStatus.OK)
-    public List<ItemRequestDto> getAllItemRequests(
+    public List<ItemRequestDto> getAll(
             @RequestHeader("X-Sharer-User-Id") Long userId,
             @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
             @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size) {
-        return itemRequestService.getAllItemRequests(userId, from, size);
+        return itemRequestService.getAll(userId, from, size);
     }
 }

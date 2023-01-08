@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserDto createUser(UserDto userDto) {
+    public UserDto create(UserDto userDto) {
         User user = userMapper.toEntity(userDto);
         User savedUser = userRepository.save(user);
         log.info("User with id " + savedUser.getId() + " created");
@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserDto patchUser(UserDto userDto) {
+    public UserDto patch(UserDto userDto) {
         User foundedUserById = userRepository.findById(userDto.getId()).orElseThrow(() -> {
             throw new NotFoundException("User with id " + userDto.getId() + " not found");
         });
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUserById(Long id) {
+    public UserDto getById(Long id) {
         User foundedUserById = userRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("User with id " + id + " not found");
         });
@@ -51,14 +51,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
+    public List<UserDto> getAll() {
         List<User> users = userRepository.findAll();
         return userMapper.toUserDtoList(users);
     }
 
     @Transactional
     @Override
-    public void deleteUserById(Long id) {
+    public void deleteById(Long id) {
         checkUserExist(id);
         userRepository.deleteById(id);
         log.info("User with id " + id + " removed");
