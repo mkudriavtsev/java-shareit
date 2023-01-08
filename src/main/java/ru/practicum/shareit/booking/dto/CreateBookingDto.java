@@ -15,11 +15,9 @@ public class CreateBookingDto {
     @NotNull
     private Long itemId;
 
-    @NotNull
     @FutureOrPresent
     private LocalDateTime start;
 
-    @NotNull
     @Future
     private LocalDateTime end;
 }

@@ -18,7 +18,7 @@ public class UserDto {
     @NotBlank(groups = ValidationGroup.OnCreate.class)
     private String name;
 
-    @Email
+    @Email(groups = {ValidationGroup.OnCreate.class, ValidationGroup.OnUpdate.class})
     @NotBlank(groups = ValidationGroup.OnCreate.class)
     private String email;
 }

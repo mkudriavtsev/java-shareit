@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     public UserDto create(UserDto userDto) {
         User user = userMapper.toEntity(userDto);
         User savedUser = userRepository.save(user);
-        log.info("User with id " + savedUser.getId() + " created");
+        log.info("User with id {} created", savedUser.getId());
         return userMapper.toDto(savedUser);
     }
 
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
         });
         userMapper.updateUserFromDto(userDto, foundedUserById);
         User updatedUser = userRepository.save(foundedUserById);
-        log.info("User with id " + updatedUser.getId() + " updated");
+        log.info("User with id {} updated", updatedUser.getId());
         return userMapper.toDto(updatedUser);
     }
 
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     public void deleteById(Long id) {
         checkUserExist(id);
         userRepository.deleteById(id);
-        log.info("User with id " + id + " removed");
+        log.info("User with id {} removed", id);
     }
 
     @Override

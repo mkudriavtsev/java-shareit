@@ -72,7 +72,7 @@ public class ItemServiceImpl implements ItemService {
             item.setRequest(itemRequest);
         }
         Item savedItem = itemRepository.save(item);
-        log.info("Item with id " + savedItem.getId() + " created");
+        log.info("Item with id {} created", savedItem.getId());
         return itemMapper.toItemDto(savedItem);
     }
 
@@ -86,7 +86,7 @@ public class ItemServiceImpl implements ItemService {
             throw new AuthorizationUserException("User with id " + ownerId + " has no rights to change this item");
         }
         itemMapper.updateItem(itemDto, item);
-        log.info("Item with id " + item.getId() + " updated");
+        log.info("Item with id {} updated", item.getId());
         return itemMapper.toItemDto(item);
     }
 
@@ -128,10 +128,10 @@ public class ItemServiceImpl implements ItemService {
             List<Booking> lastBookings = lastBookingsMap.get(itemDto.getId());
             List<Booking> nextBookings = nextBookingsMap.get(itemDto.getId());
             List<Comment> commentList = comments.get(itemDto.getId());
-            if (Objects.nonNull(lastBookings)) {
+            if (Objects.nonNull(lastBookings) && !lastBookings.isEmpty()) {
                 itemDto.setLastBooking(bookingMapper.toBookingInItemDto(lastBookings.get(0)));
             }
-            if (Objects.nonNull(nextBookings)) {
+            if (Objects.nonNull(nextBookings) && !nextBookings.isEmpty()) {
                 itemDto.setNextBooking(bookingMapper.toBookingInItemDto(nextBookings.get(0)));
             }
             if (Objects.nonNull(commentList)) {
@@ -167,7 +167,7 @@ public class ItemServiceImpl implements ItemService {
             comment.setAuthor(author);
             comment.setItem(item);
             Comment savedComment = commentRepository.save(comment);
-            log.info("Comment with id " + savedComment.getId() + " created");
+            log.info("Comment with id {} created", savedComment.getId());
             return commentMapper.toDto(savedComment);
         } else {
             throw new NoBookingInPastException("You can`t add comment with 0 finished bookings");

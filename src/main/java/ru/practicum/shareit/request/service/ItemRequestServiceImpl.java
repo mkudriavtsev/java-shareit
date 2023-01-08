@@ -23,7 +23,6 @@ import ru.practicum.shareit.user.service.UserService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -50,7 +49,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         ItemRequest itemRequest = itemRequestMapper.toEntity(dto);
         itemRequest.setRequester(user);
         ItemRequest savedItemRequest = itemRequestRepository.save(itemRequest);
-        log.info("Request with id " + savedItemRequest.getId() + " created");
+        log.info("Request with id {} created", savedItemRequest.getId());
         return itemRequestMapper.toDto(savedItemRequest);
     }
 
@@ -91,12 +90,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .stream()
                 .collect(groupingBy(item -> item.getRequest().getId(), toList()));
         for (ItemRequestDto dto : dtos) {
-            List<Item> itemList = items.get(dto.getId());
-            if (Objects.nonNull(itemList)) {
-                dto.setItems(itemMapper.toItemInRequestDtoList(itemList));
-            } else {
-                dto.setItems(Collections.emptyList());
-            }
+            List<Item> itemList = items.getOrDefault(dto.getId(), Collections.emptyList());
+            dto.setItems(itemMapper.toItemInRequestDtoList(itemList));
         }
     }
 }

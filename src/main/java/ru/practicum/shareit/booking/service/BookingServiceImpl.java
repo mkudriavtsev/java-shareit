@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +26,6 @@ import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -63,7 +60,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setItem(item);
         booking.setBooker(user);
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("Booking with id " + savedBooking.getId() + " created");
+        log.info("Booking with id {} created", savedBooking.getId());
         return bookingMapper.toBookingDto(savedBooking);
     }
 
@@ -84,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
         } else {
             booking.setStatus(Status.REJECTED);
         }
-        log.info("Booking status with id " + booking.getId() + " changed to " + booking.getStatus());
+        log.info("Booking status with id {} changed to {}", booking.getId(), booking.getStatus());
         return bookingMapper.toBookingDto(booking);
     }
 
@@ -103,54 +100,66 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingDto> getAllForUserByState(GetBookingRequest request) {
         Long userId = request.getUserId();
+        RequestState state = request.getState();
         userService.checkUserExist(userId);
         PageRequest pageRequest = PageRequest.of(
                 (request.getFrom() / request.getSize()), request.getSize(), SORT_BY_START_DESC);
-        Page<Booking> page = getPageOfBookingsForUserByState(userId, pageRequest, request.getState());
+        Page<Booking> page = Page.empty();
+        switch (state) {
+            case ALL:
+                page = bookingRepository.findByBookerId(userId, pageRequest);
+                break;
+            case CURRENT:
+                page = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case FUTURE:
+                page = bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case PAST:
+                page = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case WAITING:
+                page = bookingRepository.findByBookerIdAndStatusIs(userId, Status.WAITING, pageRequest);
+                break;
+            case REJECTED:
+                page = bookingRepository.findByBookerIdAndStatusIs(userId, Status.REJECTED, pageRequest);
+        }
         return bookingMapper.toBookingDtoList(page.getContent());
     }
 
     @Override
     public List<BookingDto> getAllForOwnerByState(GetBookingRequest request) {
         Long ownerId = request.getUserId();
+        RequestState state = request.getState();
         userService.checkUserExist(ownerId);
         PageRequest pageRequest = PageRequest.of(
                 (request.getFrom() / request.getSize()), request.getSize(), SORT_BY_START_DESC);
-        Page<Booking> page = getPageOfBookingsForOwnerByState(ownerId, pageRequest, request.getState());
+        Page<Booking> page = Page.empty();
+        switch (state) {
+            case ALL:
+                page = bookingRepository.findByItemOwnerId(ownerId, pageRequest);
+                break;
+            case CURRENT:
+                page = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case FUTURE:
+                page = bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case PAST:
+                page = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
+            case WAITING:
+                page = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId, Status.WAITING, pageRequest);
+                break;
+            case REJECTED:
+                page = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId, Status.REJECTED, pageRequest);
+        }
         return bookingMapper.toBookingDtoList(page.getContent());
-    }
-
-    private Page<Booking> getPageOfBookingsForUserByState(Long userId, Pageable pageable, RequestState state) {
-        Map<RequestState, Supplier<Page<Booking>>> strategyMap = Map.of(
-                RequestState.ALL, () -> bookingRepository.findByBookerId(userId, pageable),
-                RequestState.CURRENT, () -> bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.FUTURE, () -> bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.PAST, () -> bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.WAITING, () -> bookingRepository.findByBookerIdAndStatusIs(
-                        userId, Status.WAITING, pageable),
-                RequestState.REJECTED, () -> bookingRepository.findByBookerIdAndStatusIs(
-                        userId, Status.REJECTED, pageable)
-        );
-        return strategyMap.get(state).get();
-    }
-
-    private Page<Booking> getPageOfBookingsForOwnerByState(Long userId, Pageable pageable, RequestState state) {
-        Map<RequestState, Supplier<Page<Booking>>> strategyMap = Map.of(
-                RequestState.ALL, () -> bookingRepository.findByItemOwnerId(userId, pageable),
-                RequestState.CURRENT, () -> bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.FUTURE, () -> bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.PAST, () -> bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), pageable),
-                RequestState.WAITING, () -> bookingRepository.findByItemOwnerIdAndStatusIs(
-                        userId, Status.WAITING, pageable),
-                RequestState.REJECTED, () -> bookingRepository.findByItemOwnerIdAndStatusIs(
-                        userId, Status.REJECTED, pageable)
-        );
-        return strategyMap.get(state).get();
     }
 }
