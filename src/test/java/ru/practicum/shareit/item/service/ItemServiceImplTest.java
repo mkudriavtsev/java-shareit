@@ -283,8 +283,8 @@ class ItemServiceImplTest {
         when(itemMapper.toItemDtoList(items)).thenReturn(expectedItemDtos);
         when(commentRepository.findByItemIn(eq(items),any(Sort.class))).thenReturn(List.of(comment));
         when(commentMapper.toDtoList(anyList())).thenReturn(commentDtos);
-        when(bookingRepository.findByItemInAndStartIsBeforeOrStartEquals(
-                eq(items),any(LocalDateTime.class),any(LocalDateTime.class), any(Sort.class)))
+        when(bookingRepository.findByItemInAndStartLessThanEqual(
+                eq(items),any(LocalDateTime.class), any(Sort.class)))
                 .thenReturn(List.of(lastBooking));
         when(bookingRepository.findByItemInAndStartIsAfter(eq(items),any(LocalDateTime.class),any(Sort.class)))
                 .thenReturn(List.of(nextBooking));
@@ -471,8 +471,8 @@ class ItemServiceImplTest {
         lastBookingInItemDto.setId(1L);
         BookingInItemDto nextBookingInItemDto = new BookingInItemDto();
         nextBookingInItemDto.setId(2L);
-        when(bookingRepository.findFirstByItemIdAndStartIsBeforeOrStartEquals(
-                anyLong(), any(LocalDateTime.class), any(LocalDateTime.class), any(Sort.class))).thenReturn(lastBooking);
+        when(bookingRepository.findFirstByItemIdAndStartLessThanEqual(
+                anyLong(), any(LocalDateTime.class), any(Sort.class))).thenReturn(lastBooking);
         when(bookingRepository.findFirstByItemIdAndStartIsAfter(
                 anyLong(), any(LocalDateTime.class), any(Sort.class))).thenReturn(nextBooking);
         when(bookingMapper.toBookingInItemDto(lastBooking)).thenReturn(lastBookingInItemDto);

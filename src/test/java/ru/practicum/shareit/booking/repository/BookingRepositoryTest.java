@@ -171,14 +171,14 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findFirstByItemIdAndStartIsBeforeOrStartEquals() {
+    void findFirstByItemIdAndStartLessThanEqual() {
         Booking booking = getBooking();
         booking.setStart(LocalDateTime.now().minusDays(2L));
         booking.setEnd(LocalDateTime.now().minusDays(1L));
         Booking expectedBooking = entityManager.persistAndFlush(booking);
 
-        Booking actualBooking = bookingRepository.findFirstByItemIdAndStartIsBeforeOrStartEquals(
-                1L, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
+        Booking actualBooking = bookingRepository.findFirstByItemIdAndStartLessThanEqual(
+                1L, LocalDateTime.now(), SORT_BY_START_DESC);
 
         assertEquals(expectedBooking, actualBooking);
     }
@@ -211,7 +211,7 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findByItemInAndStartIsBeforeOrStartEquals() {
+    void findByItemInAndStartLessThanEqual() {
         List<Item> items = itemRepository.findAll();
         Booking booking = getBooking();
         booking.setStart(LocalDateTime.now().minusDays(2L));
@@ -219,8 +219,8 @@ class BookingRepositoryTest {
         Booking savedBooking = entityManager.persistAndFlush(booking);
         List<Booking> expectedBookings = List.of(savedBooking);
 
-        List<Booking> actualBookings = bookingRepository.findByItemInAndStartIsBeforeOrStartEquals(
-                items, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
+        List<Booking> actualBookings = bookingRepository.findByItemInAndStartLessThanEqual(
+                items, LocalDateTime.now(), SORT_BY_START_DESC);
 
         assertEquals(expectedBookings, actualBookings);
     }
