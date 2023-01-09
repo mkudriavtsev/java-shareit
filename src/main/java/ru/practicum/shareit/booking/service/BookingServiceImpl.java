@@ -2,27 +2,29 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.controller.RequestState;
-import ru.practicum.shareit.booking.dto.BookingRequestDto;
-import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.CreateBookingDto;
+import ru.practicum.shareit.booking.dto.GetBookingRequest;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BookingStatusException;
-import ru.practicum.shareit.exception.InvalidBookingTimeException;
 import ru.practicum.shareit.exception.ItemUnavailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -36,11 +38,12 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final BookingMapper bookingMapper;
 
     @Transactional
     @Override
-    public BookingResponseDto createBooking(BookingRequestDto dto, Long userId) {
+    public BookingDto create(CreateBookingDto dto, Long userId) {
         Item item = itemRepository.findById(dto.getItemId()).orElseThrow(() -> {
             throw new NotFoundException("Item with id " + dto.getItemId() + " not found");
         });
@@ -53,20 +56,17 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findById(userId).orElseThrow(() -> {
             throw new NotFoundException("User with id " + userId + " not found");
         });
-        if (dto.getStart().isAfter(dto.getEnd())) {
-            throw new InvalidBookingTimeException("The end date of the booking cannot be earlier than the start date");
-        }
-        Booking booking = bookingMapper.toEntityFromBookingRequestDto(dto);
+        Booking booking = bookingMapper.toEntity(dto);
         booking.setItem(item);
         booking.setBooker(user);
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("Booking with id " + savedBooking.getId() + " created");
-        return bookingMapper.toBookingResponseDtoFromEntity(savedBooking);
+        log.info("Booking with id {} created", savedBooking.getId());
+        return bookingMapper.toBookingDto(savedBooking);
     }
 
     @Transactional
     @Override
-    public BookingResponseDto setApprove(Long id, Boolean isApproved, Long ownerId) {
+    public BookingDto setApprove(Long id, Boolean isApproved, Long ownerId) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("Booking with id " + id + " not found");
         });
@@ -81,90 +81,85 @@ public class BookingServiceImpl implements BookingService {
         } else {
             booking.setStatus(Status.REJECTED);
         }
-        Booking updatedBooking = bookingRepository.save(booking);
-        log.info("Booking status with id " + updatedBooking.getId() + " changed to " + updatedBooking.getStatus());
-        return bookingMapper.toBookingResponseDtoFromEntity(updatedBooking);
+        log.info("Booking status with id {} changed to {}", booking.getId(), booking.getStatus());
+        return bookingMapper.toBookingDto(booking);
     }
 
     @Override
-    public BookingResponseDto getBookingById(Long id, Long userId) {
+    public BookingDto getById(Long id, Long userId) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> {
             throw new NotFoundException("Booking with id " + id + " not found");
         });
         if (booking.getBooker().getId().equals(userId) || booking.getItem().getOwner().getId().equals(userId)) {
-            return bookingMapper.toBookingResponseDtoFromEntity(booking);
+            return bookingMapper.toBookingDto(booking);
         } else {
-            throw new NotFoundException("User with id " + userId + " has no rights to view this item");
+            throw new NotFoundException("User with id " + userId + " has no rights to view this booking");
         }
     }
 
     @Override
-    public List<BookingResponseDto> getAllBookingsForUserByState(Long userId, RequestState state) {
-        checkUserExist(userId);
-        List<Booking> bookingList;
+    public List<BookingDto> getAllForUserByState(GetBookingRequest request) {
+        Long userId = request.getUserId();
+        RequestState state = request.getState();
+        userService.checkUserExist(userId);
+        PageRequest pageRequest = PageRequest.of(
+                (request.getFrom() / request.getSize()), request.getSize(), SORT_BY_START_DESC);
+        Page<Booking> page = Page.empty();
         switch (state) {
             case ALL:
-                bookingList = bookingRepository.findByBookerId(userId, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerId(userId, pageRequest);
+                break;
             case CURRENT:
-                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case FUTURE:
-                bookingList = bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerIdAndStartIsAfterAndEndIsAfter(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case PAST:
-                bookingList = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerIdAndStartIsBeforeAndEndIsBefore(
+                        userId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case WAITING:
-                bookingList = bookingRepository.findByBookerIdAndStatusIs(
-                        userId, Status.WAITING, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerIdAndStatusIs(userId, Status.WAITING, pageRequest);
+                break;
             case REJECTED:
-                bookingList = bookingRepository.findByBookerIdAndStatusIs(
-                        userId, Status.REJECTED, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByBookerIdAndStatusIs(userId, Status.REJECTED, pageRequest);
         }
-        return Collections.emptyList();
+        return bookingMapper.toBookingDtoList(page.getContent());
     }
 
     @Override
-    public List<BookingResponseDto> getAllBookingsForOwnerByState(Long ownerId, RequestState state) {
-        checkUserExist(ownerId);
-        List<Booking> bookingList;
+    public List<BookingDto> getAllForOwnerByState(GetBookingRequest request) {
+        Long ownerId = request.getUserId();
+        RequestState state = request.getState();
+        userService.checkUserExist(ownerId);
+        PageRequest pageRequest = PageRequest.of(
+                (request.getFrom() / request.getSize()), request.getSize(), SORT_BY_START_DESC);
+        Page<Booking> page = Page.empty();
         switch (state) {
             case ALL:
-                bookingList = bookingRepository.findByItemOwnerId(ownerId, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerId(ownerId, pageRequest);
+                break;
             case CURRENT:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
-                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case FUTURE:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
-                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerIdAndStartIsAfterAndEndIsAfter(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case PAST:
-                bookingList = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
-                        ownerId, LocalDateTime.now(), LocalDateTime.now(), SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerIdAndStartIsBeforeAndEndIsBefore(
+                        ownerId, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
+                break;
             case WAITING:
-                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(
-                        ownerId, Status.WAITING, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId, Status.WAITING, pageRequest);
+                break;
             case REJECTED:
-                bookingList = bookingRepository.findByItemOwnerIdAndStatusIs(
-                        ownerId, Status.REJECTED, SORT_BY_START_DESC);
-                return bookingMapper.toBookingResponseDtoListFromEntityList(bookingList);
+                page = bookingRepository.findByItemOwnerIdAndStatusIs(ownerId, Status.REJECTED, pageRequest);
         }
-        return Collections.emptyList();
-    }
-
-    private void checkUserExist(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> {
-            throw new NotFoundException("User with id " + userId + " not found");
-        });
+        return bookingMapper.toBookingDtoList(page.getContent());
     }
 }

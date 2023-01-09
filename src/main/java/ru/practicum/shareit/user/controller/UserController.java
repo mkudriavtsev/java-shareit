@@ -22,33 +22,33 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Validated({ValidationGroup.OnCreate.class})
-    public UserDto createUser(@Valid @RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
+    public UserDto create(@Valid @RequestBody UserDto userDto) {
+        return userService.create(userDto);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto patchUser(@PathVariable Long id,
-                             @Valid @RequestBody UserDto userDto) {
+    public UserDto patch(@PathVariable Long id,
+                         @Valid @RequestBody UserDto userDto) {
         userDto.setId(id);
-        return userService.patchUser(userDto);
+        return userService.patch(userDto);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public UserDto getById(@PathVariable Long id) {
+        return userService.getById(id);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getAllUsers() {
-        return userService.getAllUsers();
+    public List<UserDto> getAll() {
+        return userService.getAll();
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteUserById(@PathVariable Long id) {
-        userService.deleteUserById(id);
+    public void deleteById(@PathVariable Long id) {
+        userService.deleteById(id);
     }
 }

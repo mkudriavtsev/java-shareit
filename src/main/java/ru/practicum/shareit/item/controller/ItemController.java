@@ -5,7 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CreateItemDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.PatchItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.ValidationGroup;
 
@@ -22,32 +24,31 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Validated({ValidationGroup.OnCreate.class})
-    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto,
-                              @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.createItem(itemDto, ownerId);
+    public ItemDto create(@Validated({ValidationGroup.OnCreate.class}) @RequestBody CreateItemDto dto,
+                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        return itemService.create(dto, ownerId);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto patchItem(@Valid @RequestBody ItemDto itemDto,
-                             @RequestHeader("X-Sharer-User-Id") Long ownerId,
-                             @PathVariable Long id) {
+    public ItemDto patch(@Validated({ValidationGroup.OnUpdate.class}) @RequestBody PatchItemDto itemDto,
+                         @RequestHeader("X-Sharer-User-Id") Long ownerId,
+                         @PathVariable Long id) {
         itemDto.setId(id);
-        return itemService.patchItem(itemDto, ownerId);
+        return itemService.patch(itemDto, ownerId);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Long userId,
-                               @PathVariable Long id) {
-        return itemService.getItemById(id, userId);
+    public ItemDto getById(@RequestHeader("X-Sharer-User-Id") Long userId,
+                           @PathVariable Long id) {
+        return itemService.getById(id, userId);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ItemDto> getItemsByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.getItemsByOwnerId(ownerId);
+    public List<ItemDto> getByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
+        return itemService.getByOwnerId(ownerId);
     }
 
     @GetMapping("/search")

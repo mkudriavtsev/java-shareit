@@ -1,35 +1,29 @@
 package ru.practicum.shareit.booking.mapper;
 
 import org.mapstruct.Mapper;
-import ru.practicum.shareit.booking.dto.BookingItemDto;
-import ru.practicum.shareit.booking.dto.BookingRequestDto;
-import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import org.mapstruct.Mapping;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingInItemDto;
+import ru.practicum.shareit.booking.dto.CreateBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.user.mapper.UserMapper;
 
 import java.util.List;
-import java.util.Objects;
 
 @Mapper(uses = {ItemMapper.class, UserMapper.class})
-public abstract class BookingMapper {
+public interface BookingMapper {
 
-    public abstract Booking toEntityFromBookingRequestDto(BookingRequestDto dto);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "booker", ignore = true)
+    @Mapping(target = "item", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    Booking toEntity(CreateBookingDto dto);
 
-    public abstract BookingResponseDto toBookingResponseDtoFromEntity(Booking booking);
+    BookingDto toBookingDto(Booking booking);
 
-    public abstract List<BookingResponseDto> toBookingResponseDtoListFromEntityList(List<Booking> bookingList);
+    List<BookingDto> toBookingDtoList(List<Booking> bookingList);
 
-    public BookingItemDto toBookingItemDtoFromEntity(Booking booking) {
-        if (Objects.isNull(booking)) {
-            return null;
-        }
-        BookingItemDto dto = new BookingItemDto();
-        dto.setId(booking.getId());
-        dto.setStart(booking.getStart());
-        dto.setEnd(booking.getEnd());
-        dto.setStatus(booking.getStatus());
-        dto.setBookerId(booking.getBooker().getId());
-        return dto;
-    }
+    @Mapping(target = "bookerId", source = "booking.booker.id")
+    BookingInItemDto toBookingInItemDto(Booking booking);
 }

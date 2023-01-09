@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.CreationTimestamp;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
@@ -35,6 +36,7 @@ public class Comment {
     @ToString.Exclude
     private User author;
 
+    @CreationTimestamp
     @Column(name = "created")
     private LocalDateTime created;
 

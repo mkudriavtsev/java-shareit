@@ -7,6 +7,15 @@ create table if not exists users
     constraint PK_USERS primary key (id)
 );
 
+create table if not exists requests
+(
+    id           BIGINT auto_increment,
+    description  CHARACTER LARGE OBJECT,
+    requester_id BIGINT references USERS on delete cascade,
+    created      TIMESTAMP,
+    constraint PK_REQUESTS primary key (id)
+);
+
 create table if not exists items
 (
     id          BIGINT auto_increment,
@@ -14,6 +23,7 @@ create table if not exists items
     description CHARACTER LARGE OBJECT,
     available   BOOLEAN                not null,
     owner_id    BIGINT references USERS on delete cascade,
+    request_id  BIGINT references REQUESTS on delete cascade,
     constraint ITEMS_PK primary key (id)
 );
 
@@ -37,3 +47,5 @@ create table if not exists comments
     created   TIMESTAMP,
     constraint PK_COMMENTS primary key (id)
 );
+
+
