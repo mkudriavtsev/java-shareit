@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import javax.validation.ConstraintViolationException;
-
 @Slf4j
 @RestControllerAdvice
 public class ExceptionApiHandler {
@@ -18,13 +16,6 @@ public class ExceptionApiHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
-        log.warn(e.getMessage());
-        return new ErrorResponse(e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleConstraintViolationException(ConstraintViolationException e) {
         log.warn(e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
